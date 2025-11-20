@@ -24,6 +24,7 @@ interface Post {
     isLikedByMe: boolean;
     repost?: Post;
     quote?: Post;
+    image?: string | null;
 }
 
 export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string }) {
@@ -211,7 +212,12 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                         </div>
                                     )}
 
-                                    {/* Quote Content */}
+                                    {contentPost.image && (
+                                        <div className="mb-3 rounded-2xl overflow-hidden border border-border">
+                                            <img src={contentPost.image} alt="Post attachment" className="w-full max-h-[500px] object-cover" />
+                                        </div>
+                                    )}
+
                                     {contentPost.quote && (
                                         <div className="mt-2 mb-3 border border-border rounded-xl p-3 hover:bg-muted/50 transition-colors overflow-hidden" onClick={(e) => {
                                             e.stopPropagation();
@@ -234,6 +240,11 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                             <div className="text-foreground text-sm whitespace-pre-wrap break-words">
                                                 {contentPost.quote.content}
                                             </div>
+                                            {contentPost.quote.image && (
+                                                <div className="mt-2 rounded-lg overflow-hidden border border-border">
+                                                    <img src={contentPost.quote.image} alt="Quote attachment" className="w-full max-h-[300px] object-cover" />
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 

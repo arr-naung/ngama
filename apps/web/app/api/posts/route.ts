@@ -135,7 +135,8 @@ export async function POST(request: Request) {
                     authorId: payload.userId as string,
                     parentId: validation.data.parentId,
                     repostId: validation.data.repostId,
-                    quoteId: validation.data.quoteId
+                    quoteId: validation.data.quoteId,
+                    image: validation.data.image
                 },
                 include: {
                     author: {

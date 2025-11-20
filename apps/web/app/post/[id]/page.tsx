@@ -27,6 +27,7 @@ interface Post {
     replies: Post[];
     repost?: Post;
     quote?: Post;
+    image?: string | null;
 }
 
 export default function PostPage() {
@@ -210,6 +211,12 @@ export default function PostPage() {
                     </div>
                 )}
 
+                {contentPost.image && (
+                    <div className="mb-3 rounded-2xl overflow-hidden border border-border">
+                        <img src={contentPost.image} alt="Post attachment" className="w-full max-h-[600px] object-cover" />
+                    </div>
+                )}
+
                 {p.quote && (
                     <div className="mt-2 mb-3 border border-border rounded-xl p-3 hover:bg-muted/50 transition-colors overflow-hidden cursor-pointer" onClick={() => router.push(`/post/${p.quote!.id}`)}>
                         <div className="flex items-center gap-2 mb-1">
@@ -228,6 +235,11 @@ export default function PostPage() {
                         <div className="text-foreground text-sm whitespace-pre-wrap break-words">
                             {p.quote.content}
                         </div>
+                        {p.quote.image && (
+                            <div className="mt-2 rounded-lg overflow-hidden border border-border">
+                                <img src={p.quote.image} alt="Quote attachment" className="w-full max-h-[300px] object-cover" />
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -373,6 +385,11 @@ export default function PostPage() {
                                     <div className="text-foreground text-sm whitespace-pre-wrap break-words">
                                         {ancestor.quote.content}
                                     </div>
+                                    {ancestor.quote.image && (
+                                        <div className="mt-2 rounded-lg overflow-hidden border border-border">
+                                            <img src={ancestor.quote.image} alt="Quote attachment" className="w-full max-h-[300px] object-cover" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -467,6 +484,11 @@ export default function PostPage() {
                                     <div className="text-foreground text-sm whitespace-pre-wrap break-words">
                                         {reply.quote.content}
                                     </div>
+                                    {reply.quote.image && (
+                                        <div className="mt-2 rounded-lg overflow-hidden border border-border">
+                                            <img src={reply.quote.image} alt="Quote attachment" className="w-full max-h-[300px] object-cover" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
