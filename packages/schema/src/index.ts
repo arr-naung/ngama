@@ -1,0 +1,31 @@
+import { z } from 'zod';
+
+export const SignupSchema = z.object({
+    email: z.string().email(),
+    username: z.string().min(3).max(20),
+    password: z.string().min(8)
+});
+
+export const SigninSchema = z.object({
+    email: z.string().email(),
+    password: z.string()
+});
+
+export const CreatePostSchema = z.object({
+    content: z.string().min(1).max(280),
+    parentId: z.string().optional()
+});
+
+export const UpdateProfileSchema = z.object({
+    name: z.string().min(1).max(50).optional(),
+    bio: z.string().max(160).optional(),
+    // TODO: Re-enable .url() validation in production when using S3/Cloudinary (absolute URLs)
+    // Currently using relative paths (/uploads/...) for local development
+    image: z.string().optional(),
+    coverImage: z.string().optional()
+});
+
+export type SignupInput = z.infer<typeof SignupSchema>;
+export type SigninInput = z.infer<typeof SigninSchema>;
+export type CreatePostInput = z.infer<typeof CreatePostSchema>;
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
