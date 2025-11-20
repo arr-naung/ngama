@@ -22,56 +22,19 @@ export async function GET(
             }
         }
 
-        const post = await prisma.post.findUnique({
+        // First fetch the post to get parentId
+        const initialPost = await prisma.post.findUnique({
             where: { id: postId },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true
-                    }
-                },
-                _count: {
-                    select: { likes: true, replies: true }
-                },
-                likes: currentUserId ? {
-                    where: { userId: currentUserId },
-                    select: { userId: true }
-                } : false,
-                replies: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true
-                            }
-                        },
-                        _count: {
-                            select: { likes: true, replies: true }
-                        },
-                        likes: currentUserId ? {
-                            where: { userId: currentUserId },
-                            select: { userId: true }
-                        } : false
-                    },
-                    orderBy: {
-                        createdAt: 'desc'
-                    }
-                }
-            }
+            select: { parentId: true }
         });
 
-        if (!post) {
+        if (!initialPost) {
             return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         }
 
         // Fetch ancestors
         let ancestors: any[] = [];
-        let currentParentId = post.parentId;
+        let currentParentId = initialPost.parentId;
 
         while (currentParentId) {
             const parent = await prisma.post.findUnique({
@@ -86,18 +49,179 @@ export async function GET(
                         }
                     },
                     _count: {
-                        select: { likes: true, replies: true }
+                        select: { likes: true, replies: true, reposts: true, quotes: true }
                     },
                     likes: currentUserId ? {
                         where: { userId: currentUserId },
                         select: { userId: true }
-                    } : false
+                    } : false,
+                    repost: {
+                        include: {
+                            author: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    name: true,
+                                    image: true
+                                }
+                            },
+                            _count: {
+                                select: { likes: true, replies: true, reposts: true, quotes: true }
+                            },
+                            likes: currentUserId ? {
+                                where: { userId: currentUserId },
+                                select: { userId: true }
+                            } : false
+                        }
+                    },
+                    quote: {
+                        include: {
+                            author: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    name: true,
+                                    image: true
+                                }
+                            },
+                            _count: {
+                                select: { likes: true, replies: true, reposts: true, quotes: true }
+                            },
+                            likes: currentUserId ? {
+                                where: { userId: currentUserId },
+                                select: { userId: true }
+                            } : false
+                        }
+                    }
                 }
             });
 
             if (!parent) break;
             ancestors.unshift(parent); // Add to beginning
             currentParentId = parent.parentId;
+        }
+
+        const post = await prisma.post.findUnique({
+            where: { id: postId },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                        name: true,
+                        image: true
+                    }
+                },
+                _count: {
+                    select: { likes: true, replies: true, reposts: true, quotes: true }
+                },
+                likes: currentUserId ? {
+                    where: { userId: currentUserId },
+                    select: { userId: true }
+                } : false,
+                repost: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true
+                            }
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true }
+                        },
+                        likes: currentUserId ? {
+                            where: { userId: currentUserId },
+                            select: { userId: true }
+                        } : false
+                    }
+                },
+                quote: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true
+                            }
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true }
+                        },
+                        likes: currentUserId ? {
+                            where: { userId: currentUserId },
+                            select: { userId: true }
+                        } : false
+                    }
+                },
+                replies: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true
+                            }
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true }
+                        },
+                        likes: currentUserId ? {
+                            where: { userId: currentUserId },
+                            select: { userId: true }
+                        } : false,
+                        repost: {
+                            include: {
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                },
+                                _count: {
+                                    select: { likes: true, replies: true, reposts: true, quotes: true }
+                                },
+                                likes: currentUserId ? {
+                                    where: { userId: currentUserId },
+                                    select: { userId: true }
+                                } : false
+                            }
+                        },
+                        quote: {
+                            include: {
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                },
+                                _count: {
+                                    select: { likes: true, replies: true, reposts: true, quotes: true }
+                                },
+                                likes: currentUserId ? {
+                                    where: { userId: currentUserId },
+                                    select: { userId: true }
+                                } : false
+                            }
+                        }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
+                }
+            }
+        });
+
+        if (!post) {
+            return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         }
 
         const formatPost = (p: any) => ({

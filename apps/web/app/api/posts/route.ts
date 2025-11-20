@@ -32,23 +32,69 @@ export async function GET(request: Request) {
                     }
                 },
                 _count: {
-                    select: { likes: true, replies: true }
+                    select: { likes: true, replies: true, reposts: true, quotes: true }
                 },
                 likes: currentUserId ? {
                     where: { userId: currentUserId },
                     select: { userId: true }
-                } : false
+                } : false,
+                repost: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true
+                            }
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true }
+                        },
+                        likes: currentUserId ? {
+                            where: { userId: currentUserId },
+                            select: { userId: true }
+                        } : false
+                    }
+                },
+                quote: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true
+                            }
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true }
+                        },
+                        likes: currentUserId ? {
+                            where: { userId: currentUserId },
+                            select: { userId: true }
+                        } : false
+                    }
+                }
             },
             orderBy: {
                 createdAt: 'desc'
             }
         });
 
-        const postsWithLikeStatus = posts.map(post => ({
-            ...post,
-            likedByMe: post.likes ? post.likes.length > 0 : false,
-            likes: undefined
-        }));
+        const postsWithLikeStatus = posts.map(post => {
+            const mapPost = (p: any) => ({
+                ...p,
+                isLikedByMe: p.likes ? p.likes.length > 0 : false,
+                likes: undefined
+            });
+
+            const mappedPost = mapPost(post);
+            if (mappedPost.repost) mappedPost.repost = mapPost(mappedPost.repost);
+            if (mappedPost.quote) mappedPost.quote = mapPost(mappedPost.quote);
+
+            return mappedPost;
+        });
 
         return NextResponse.json(postsWithLikeStatus);
     } catch (error) {
@@ -87,7 +133,9 @@ export async function POST(request: Request) {
                 data: {
                     content: validation.data.content ?? undefined,
                     authorId: payload.userId as string,
-                    parentId: validation.data.parentId
+                    parentId: validation.data.parentId,
+                    repostId: validation.data.repostId,
+                    quoteId: validation.data.quoteId
                 },
                 include: {
                     author: {
@@ -100,22 +148,32 @@ export async function POST(request: Request) {
                 }
             });
 
-            // Notification for Reply
-            if (validation.data.parentId) {
-                const parentPost = await tx.post.findUnique({
-                    where: { id: validation.data.parentId }
+            // Notification Logic
+            const notify = async (type: string, targetPostId: string) => {
+                const targetPost = await tx.post.findUnique({
+                    where: { id: targetPostId }
                 });
 
-                if (parentPost && parentPost.authorId !== payload.userId) {
+                if (targetPost && targetPost.authorId !== payload.userId) {
                     await tx.notification.create({
                         data: {
-                            type: 'REPLY',
-                            userId: parentPost.authorId,
-                            actorId: payload.userId,
+                            type,
+                            userId: targetPost.authorId,
+                            actorId: payload.userId as string,
                             postId: newPost.id
                         }
                     });
                 }
+            };
+
+            if (validation.data.parentId) {
+                await notify('REPLY', validation.data.parentId);
+            }
+            if (validation.data.repostId) {
+                await notify('REPOST', validation.data.repostId);
+            }
+            if (validation.data.quoteId) {
+                await notify('QUOTE', validation.data.quoteId);
             }
 
             return newPost;

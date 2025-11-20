@@ -99,7 +99,45 @@ export async function GET(
                     likes: currentUserId ? {
                         where: { userId: currentUserId },
                         select: { userId: true }
-                    } : false
+                    } : false,
+                    repost: {
+                        include: {
+                            author: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    name: true,
+                                    image: true
+                                }
+                            },
+                            _count: {
+                                select: { likes: true, replies: true, reposts: true, quotes: true }
+                            },
+                            likes: currentUserId ? {
+                                where: { userId: currentUserId },
+                                select: { userId: true }
+                            } : false
+                        }
+                    },
+                    quote: {
+                        include: {
+                            author: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    name: true,
+                                    image: true
+                                }
+                            },
+                            _count: {
+                                select: { likes: true, replies: true, reposts: true, quotes: true }
+                            },
+                            likes: currentUserId ? {
+                                where: { userId: currentUserId },
+                                select: { userId: true }
+                            } : false
+                        }
+                    }
                 },
                 orderBy: {
                     createdAt: 'desc'

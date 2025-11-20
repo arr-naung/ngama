@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import PostInput from '@/components/post-input';
 import ReplyModal from '@/components/reply-modal';
+import QuoteModal from '@/components/quote-modal';
 
 interface Post {
     id: string;
@@ -36,6 +37,14 @@ export default function PostPage() {
     const [error, setError] = useState('');
     const router = useRouter();
     const [replyingTo, setReplyingTo] = useState<Post | null>(null);
+    const [quotingPost, setQuotingPost] = useState<Post | null>(null);
+    const [retweetMenuOpen, setRetweetMenuOpen] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleClickOutside = () => setRetweetMenuOpen(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     const fetchPost = async () => {
         try {
@@ -105,6 +114,51 @@ export default function PostPage() {
         } catch (error) {
             console.error('Like failed', error);
             // Revert logic could be added here
+        }
+    };
+
+    const handleRepost = async (p: Post) => {
+        setRetweetMenuOpen(null);
+
+        // Optimistic update
+        const toggleRepost = (post: Post) => ({
+            ...post,
+            _count: {
+                ...post._count,
+                reposts: post._count.reposts + 1
+            }
+        });
+
+        if (p.id === post?.id) {
+            setPost(toggleRepost(post));
+        } else if (post?.replies.some(r => r.id === p.id)) {
+            setPost({
+                ...post,
+                replies: post.replies.map(r => r.id === p.id ? toggleRepost(r) : r)
+            });
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                router.push('/auth/signin');
+                return;
+            }
+
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ repostId: p.id })
+            });
+
+            if (!res.ok) throw new Error('Failed to repost');
+            window.location.reload();
+        } catch (error) {
+            console.error('Repost failed', error);
+            alert('Failed to repost');
         }
     };
 
@@ -195,12 +249,47 @@ export default function PostPage() {
                         <span className="text-sm">{contentPost._count.replies}</span>
                     </button>
 
-                    <button className="group flex items-center gap-2 hover:text-green-500 transition-colors">
-                        <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
-                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
-                        </div>
-                        <span className="text-sm">{(contentPost._count.reposts || 0) + (contentPost._count.quotes || 0)}</span>
-                    </button>
+                    <div className="relative">
+                        <button
+                            className="group flex items-center gap-2 hover:text-green-500 transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.nativeEvent.stopImmediatePropagation();
+                                setRetweetMenuOpen(retweetMenuOpen === contentPost.id ? null : contentPost.id);
+                            }}
+                        >
+                            <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                            </div>
+                            <span className="text-sm">{(contentPost._count.reposts || 0) + (contentPost._count.quotes || 0)}</span>
+                        </button>
+
+                        {retweetMenuOpen === contentPost.id && (
+                            <div className="absolute top-8 left-0 z-20 w-32 rounded-lg bg-background shadow-lg border border-border py-2">
+                                <button
+                                    className="w-full px-4 py-2 text-left hover:bg-muted/50 font-bold flex items-center gap-2"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRepost(contentPost);
+                                    }}
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                                    Repost
+                                </button>
+                                <button
+                                    className="w-full px-4 py-2 text-left hover:bg-muted/50 font-bold flex items-center gap-2"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRetweetMenuOpen(null);
+                                        setQuotingPost(contentPost);
+                                    }}
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M14.23 2.854c.98-.177 1.762-.825 1.762-1.854h-2.01c0 .49-.22.83-.53.83-.17 0-.36-.04-.5-.1a.99.99 0 0 0-1.12.23c-.2.24-.26.56-.17.85.35 1.14 1.4 1.97 2.578 2.044zM19.5 13c-1.7 0-3.24.49-4.55 1.33L13.6 13H11v9.5h2.55l1.35-1.35c1.31-.84 2.85-1.33 4.55-1.33.49 0 .96.04 1.42.12V10.9c-.46-.08-.93-.12-1.42-.12zM7 13c-1.7 0-3.24.49-4.55 1.33L1.1 13H-1.5v9.5H1.1l1.35-1.35C3.76 20.31 5.3 19.82 7 19.82c.49 0 .96.04 1.42.12V10.9C7.96 10.82 7.49 10.78 7 10.78z"></path><path d="M20.5 3H5.5c-1.38 0-2.5 1.12-2.5 2.5v11.33c1.17-.94 2.67-1.51 4.29-1.51 1.63 0 3.13.57 4.3 1.51 1.17-.94 2.67-1.51 4.29-1.51 1.63 0 3.13.57 4.3 1.51V5.5c0-1.38-1.12-2.5-2.5-2.5zm-1.5 9h-2v-2h2v2zm0-4h-2V6h2v2z"></path></g></svg>
+                                    Quote
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     <button
                         className={`group flex items-center gap-2 transition-colors ${contentPost.isLikedByMe ? 'text-pink-600' : 'hover:text-pink-600'}`}
@@ -261,6 +350,32 @@ export default function PostPage() {
                             <div className="text-foreground whitespace-pre-wrap break-words mb-2">
                                 {ancestor.content}
                             </div>
+
+                            {ancestor.quote && (
+                                <div className="mt-2 mb-3 border border-border rounded-xl p-3 hover:bg-muted/50 transition-colors overflow-hidden cursor-pointer" onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/post/${ancestor.quote!.id}`);
+                                }}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="w-5 h-5 rounded-full bg-muted overflow-hidden">
+                                            {ancestor.quote.author.image ? (
+                                                <img src={ancestor.quote.author.image} alt={ancestor.quote.author.username} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground font-bold">
+                                                    {(ancestor.quote.author.username?.[0] || '?').toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="font-bold text-sm text-foreground">{ancestor.quote.author.name || ancestor.quote.author.username}</span>
+                                        <span className="text-muted-foreground text-sm">@{ancestor.quote.author.username}</span>
+                                        <span className="text-muted-foreground text-sm">· {new Date(ancestor.quote.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="text-foreground text-sm whitespace-pre-wrap break-words">
+                                        {ancestor.quote.content}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex gap-12 text-muted-foreground">
                                 <button
                                     className="flex items-center gap-1 hover:text-blue-500"
@@ -329,6 +444,32 @@ export default function PostPage() {
                             <div className="text-foreground whitespace-pre-wrap break-words mb-3">
                                 {reply.content}
                             </div>
+
+                            {reply.quote && (
+                                <div className="mt-2 mb-3 border border-border rounded-xl p-3 hover:bg-muted/50 transition-colors overflow-hidden cursor-pointer" onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/post/${reply.quote!.id}`);
+                                }}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="w-5 h-5 rounded-full bg-muted overflow-hidden">
+                                            {reply.quote.author.image ? (
+                                                <img src={reply.quote.author.image} alt={reply.quote.author.username} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground font-bold">
+                                                    {(reply.quote.author.username?.[0] || '?').toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="font-bold text-sm text-foreground">{reply.quote.author.name || reply.quote.author.username}</span>
+                                        <span className="text-muted-foreground text-sm">@{reply.quote.author.username}</span>
+                                        <span className="text-muted-foreground text-sm">· {new Date(reply.quote.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="text-foreground text-sm whitespace-pre-wrap break-words">
+                                        {reply.quote.content}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex justify-between max-w-md text-muted-foreground">
                                 <button
                                     className="group flex items-center gap-2 hover:text-blue-500 transition-colors"
@@ -343,12 +484,47 @@ export default function PostPage() {
                                     <span className="text-sm">{reply._count.replies || 0}</span>
                                 </button>
 
-                                <button className="group flex items-center gap-2 hover:text-green-500 transition-colors">
-                                    <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
-                                    </div>
-                                    <span className="text-sm">{(reply._count.reposts || 0) + (reply._count.quotes || 0)}</span>
-                                </button>
+                                <div className="relative">
+                                    <button
+                                        className="group flex items-center gap-2 hover:text-green-500 transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.nativeEvent.stopImmediatePropagation();
+                                            setRetweetMenuOpen(retweetMenuOpen === reply.id ? null : reply.id);
+                                        }}
+                                    >
+                                        <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                                        </div>
+                                        <span className="text-sm">{(reply._count.reposts || 0) + (reply._count.quotes || 0)}</span>
+                                    </button>
+
+                                    {retweetMenuOpen === reply.id && (
+                                        <div className="absolute top-8 left-0 z-20 w-32 rounded-lg bg-background shadow-lg border border-border py-2">
+                                            <button
+                                                className="w-full px-4 py-2 text-left hover:bg-muted/50 font-bold flex items-center gap-2"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRepost(reply);
+                                                }}
+                                            >
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                                                Repost
+                                            </button>
+                                            <button
+                                                className="w-full px-4 py-2 text-left hover:bg-muted/50 font-bold flex items-center gap-2"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setRetweetMenuOpen(null);
+                                                    setQuotingPost(reply);
+                                                }}
+                                            >
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M14.23 2.854c.98-.177 1.762-.825 1.762-1.854h-2.01c0 .49-.22.83-.53.83-.17 0-.36-.04-.5-.1a.99.99 0 0 0-1.12.23c-.2.24-.26.56-.17.85.35 1.14 1.4 1.97 2.578 2.044zM19.5 13c-1.7 0-3.24.49-4.55 1.33L13.6 13H11v9.5h2.55l1.35-1.35c1.31-.84 2.85-1.33 4.55-1.33.49 0 .96.04 1.42.12V10.9c-.46-.08-.93-.12-1.42-.12zM7 13c-1.7 0-3.24.49-4.55 1.33L1.1 13H-1.5v9.5H1.1l1.35-1.35C3.76 20.31 5.3 19.82 7 19.82c.49 0 .96.04 1.42.12V10.9C7.96 10.82 7.49 10.78 7 10.78z"></path><path d="M20.5 3H5.5c-1.38 0-2.5 1.12-2.5 2.5v11.33c1.17-.94 2.67-1.51 4.29-1.51 1.63 0 3.13.57 4.3 1.51 1.17-.94 2.67-1.51 4.29-1.51 1.63 0 3.13.57 4.3 1.51V5.5c0-1.38-1.12-2.5-2.5-2.5zm-1.5 9h-2v-2h2v2zm0-4h-2V6h2v2z"></path></g></svg>
+                                                Quote
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <button
                                     className={`group flex items-center gap-2 transition-colors ${reply.isLikedByMe ? 'text-pink-600' : 'hover:text-pink-600'}`}
@@ -381,6 +557,14 @@ export default function PostPage() {
                     post={replyingTo}
                     isOpen={!!replyingTo}
                     onClose={() => setReplyingTo(null)}
+                />
+            )}
+
+            {quotingPost && (
+                <QuoteModal
+                    post={quotingPost}
+                    isOpen={!!quotingPost}
+                    onClose={() => setQuotingPost(null)}
                 />
             )}
         </main>
