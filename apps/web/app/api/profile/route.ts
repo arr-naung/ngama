@@ -41,6 +41,7 @@ export async function PATCH(request: Request) {
                 name: true,
                 bio: true,
                 image: true,
+                // @ts-ignore
                 coverImage: true
             }
         });

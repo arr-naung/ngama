@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function PostInput({
@@ -15,6 +15,26 @@ export default function PostInput({
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const [user, setUser] = useState<{ image: string | null; username: string } | null>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            try {
+                const res = await fetch('/api/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUser(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch user', error);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,7 +77,15 @@ export default function PostInput({
         <div className="border-b border-border p-4">
             <form onSubmit={handleSubmit}>
                 <div className={`flex gap-4 ${parentId ? 'items-center' : ''}`}>
-                    <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0" />
+                    <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0 overflow-hidden">
+                        {user?.image ? (
+                            <img src={user.image} alt={user.username} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
+                                {(user?.username?.[0] || '?').toUpperCase()}
+                            </div>
+                        )}
+                    </div>
                     <div className="flex-1 flex gap-2">
                         <textarea
                             className={`w-full bg-transparent text-xl text-foreground placeholder:text-muted-foreground focus:outline-none resize-none ${parentId ? 'h-10 py-1' : ''}`}

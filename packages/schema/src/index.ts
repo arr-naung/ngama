@@ -12,8 +12,17 @@ export const SigninSchema = z.object({
 });
 
 export const CreatePostSchema = z.object({
-    content: z.string().min(1).max(280),
-    parentId: z.string().optional()
+    content: z.string().max(280).optional(),
+    parentId: z.string().optional(),
+    repostId: z.string().optional(),
+    quoteId: z.string().optional()
+}).refine(data => {
+    // Content is required unless it's a pure repost
+    if (data.repostId) return true;
+    return !!data.content && data.content.length > 0;
+}, {
+    message: "Content is required unless reposting",
+    path: ["content"]
 });
 
 export const UpdateProfileSchema = z.object({

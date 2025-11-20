@@ -10,9 +10,11 @@ export async function GET(request: Request) {
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
-            const payload = verifyToken(token);
-            if (payload && typeof payload !== 'string' && payload.userId) {
-                currentUserId = payload.userId;
+            if (token) {
+                const payload = verifyToken(token);
+                if (payload && typeof payload !== 'string' && payload.userId) {
+                    currentUserId = payload.userId;
+                }
             }
         }
 
@@ -25,7 +27,8 @@ export async function GET(request: Request) {
                     select: {
                         id: true,
                         username: true,
-                        email: true
+                        name: true,
+                        image: true
                     }
                 },
                 _count: {
@@ -82,19 +85,22 @@ export async function POST(request: Request) {
         const post = await prisma.$transaction(async (tx) => {
             const newPost = await tx.post.create({
                 data: {
-                    content: validation.data.content,
-                    authorId: payload.userId,
+                    content: validation.data.content ?? undefined,
+                    authorId: payload.userId as string,
                     parentId: validation.data.parentId
                 },
                 include: {
                     author: {
                         select: {
-                            username: true
+                            username: true,
+                            name: true,
+                            image: true
                         }
                     }
                 }
             });
 
+            // Notification for Reply
             if (validation.data.parentId) {
                 const parentPost = await tx.post.findUnique({
                     where: { id: validation.data.parentId }

@@ -16,9 +16,11 @@ export async function GET(
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
-            const payload = verifyToken(token);
-            if (payload && typeof payload !== 'string' && payload.userId) {
-                currentUserId = payload.userId;
+            if (token) {
+                const payload = verifyToken(token);
+                if (payload && typeof payload !== 'string' && payload.userId) {
+                    currentUserId = payload.userId;
+                }
             }
         }
 
@@ -30,6 +32,7 @@ export async function GET(
                 name: true,
                 bio: true,
                 image: true,
+                // @ts-ignore
                 coverImage: true,
                 createdAt: true,
                 _count: {

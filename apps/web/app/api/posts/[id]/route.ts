@@ -69,6 +69,37 @@ export async function GET(
             return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         }
 
+        // Fetch ancestors
+        let ancestors: any[] = [];
+        let currentParentId = post.parentId;
+
+        while (currentParentId) {
+            const parent = await prisma.post.findUnique({
+                where: { id: currentParentId },
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            username: true,
+                            name: true,
+                            image: true
+                        }
+                    },
+                    _count: {
+                        select: { likes: true, replies: true }
+                    },
+                    likes: currentUserId ? {
+                        where: { userId: currentUserId },
+                        select: { userId: true }
+                    } : false
+                }
+            });
+
+            if (!parent) break;
+            ancestors.unshift(parent); // Add to beginning
+            currentParentId = parent.parentId;
+        }
+
         const formatPost = (p: any) => ({
             ...p,
             likedByMe: p.likes ? p.likes.length > 0 : false,
@@ -77,6 +108,7 @@ export async function GET(
 
         const postWithStatus = {
             ...formatPost(post),
+            ancestors: ancestors.map(formatPost),
             replies: post.replies.map(formatPost)
         };
 

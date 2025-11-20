@@ -10,6 +10,9 @@ export async function GET(request: Request) {
         }
 
         const token = authHeader.split(' ')[1];
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
         const payload = verifyToken(token);
 
         if (!payload || typeof payload === 'string' || !payload.userId) {
@@ -24,6 +27,7 @@ export async function GET(request: Request) {
                 name: true,
                 email: true,
                 image: true,
+                // @ts-ignore
                 coverImage: true,
                 bio: true,
                 _count: {

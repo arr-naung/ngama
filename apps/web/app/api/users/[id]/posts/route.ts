@@ -16,9 +16,11 @@ export async function GET(
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
-            const payload = verifyToken(token);
-            if (payload && typeof payload !== 'string' && payload.userId) {
-                currentUserId = payload.userId;
+            if (token) {
+                const payload = verifyToken(token);
+                if (payload && typeof payload !== 'string' && payload.userId) {
+                    currentUserId = payload.userId;
+                }
             }
         }
 
