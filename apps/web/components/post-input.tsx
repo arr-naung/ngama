@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import TextareaAutosize from 'react-textarea-autosize';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 
 export default function PostInput({
     onSuccess,
@@ -18,6 +20,11 @@ export default function PostInput({
     const [user, setUser] = useState<{ image: string | null; username: string } | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    const MAX_LENGTH = 10000;
+    const WARNING_LENGTH = MAX_LENGTH - 100;
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -36,6 +43,17 @@ export default function PostInput({
             }
         };
         fetchUser();
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,9 +73,14 @@ export default function PostInput({
         }
     };
 
+    const onEmojiClick = (emojiData: any) => {
+        setContent(prev => prev + emojiData.emoji);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim() && !selectedFile) return;
+        if (content.length > MAX_LENGTH) return;
 
         setLoading(true);
         try {
@@ -96,6 +119,7 @@ export default function PostInput({
 
             setContent('');
             removeImage();
+            setShowEmojiPicker(false);
             if (onSuccess) {
                 onSuccess();
             } else {
@@ -108,6 +132,15 @@ export default function PostInput({
             setLoading(false);
         }
     };
+
+    // Progress Ring Calculation
+    const progress = Math.min((content.length / MAX_LENGTH) * 100, 100);
+    const isOverLimit = content.length > MAX_LENGTH;
+    const isNearLimit = content.length > WARNING_LENGTH;
+
+    const radius = 10;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
         <div className="border-b border-border p-4">
@@ -122,19 +155,20 @@ export default function PostInput({
                             </div>
                         )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                         <div className="flex gap-2">
-                            <textarea
-                                className={`w-full bg-transparent text-xl text-foreground placeholder:text-muted-foreground focus:outline-none resize-none ${parentId ? 'h-10 py-1' : ''}`}
+                            <TextareaAutosize
+                                className={`w-full bg-transparent text-xl text-foreground placeholder:text-muted-foreground focus:outline-none resize-none ${parentId ? 'py-1' : ''}`}
                                 placeholder={placeholder}
-                                rows={parentId ? 1 : 2}
+                                minRows={parentId ? 1 : 2}
+                                maxRows={15}
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                             />
                             {parentId && (
                                 <button
                                     type="submit"
-                                    disabled={(!content.trim() && !selectedFile) || loading}
+                                    disabled={(!content.trim() && !selectedFile) || loading || isOverLimit}
                                     className="rounded-full bg-primary px-4 py-1 font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50 h-9 self-center"
                                 >
                                     {loading ? '...' : 'Reply'}
@@ -157,9 +191,9 @@ export default function PostInput({
                     </div>
                 </div>
                 {!parentId && (
-                    <div className="mt-2 flex justify-between items-center pl-14">
-                        <div className="flex gap-2 text-primary">
-                            <label className="p-2 rounded-full hover:bg-primary/10 cursor-pointer transition-colors">
+                    <div className="mt-2 flex justify-between items-center pl-14 relative">
+                        <div className="flex gap-2 text-primary items-center">
+                            <label className="p-2 rounded-full hover:bg-primary/10 cursor-pointer transition-colors" title="Media">
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -168,14 +202,74 @@ export default function PostInput({
                                 />
                                 <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z"></path></g></svg>
                             </label>
+
+                            <div className="relative" ref={emojiPickerRef}>
+                                <button
+                                    type="button"
+                                    className="p-2 rounded-full hover:bg-primary/10 cursor-pointer transition-colors"
+                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                    title="Emoji"
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 2.5c.828 0 1.5-1.119 1.5-2.5S15.328 7 14.5 7 13 8.119 13 9.5s.672 2.5 1.5 2.5zM12 16c-2.224 0-4.224-1.225-5.242-3.015-.205-.357-.085-.806.269-1.01.351-.201.804-.084 1.005.271C8.721 13.53 10.263 14.5 12 14.5s3.279-.97 3.968-2.254c.201-.355.654-.472 1.005-.271.354.204.474.653.269 1.01C16.224 14.775 14.224 16 12 16z"></path></g></svg>
+                                </button>
+                                {showEmojiPicker && (
+                                    <div className="absolute top-10 left-0 z-50 shadow-xl rounded-xl">
+                                        <EmojiPicker
+                                            onEmojiClick={onEmojiClick}
+                                            theme={Theme.AUTO}
+                                            width={350}
+                                            height={400}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <button
-                            type="submit"
-                            disabled={(!content.trim() && !selectedFile) || loading}
-                            className="rounded-full bg-primary px-4 py-2 font-bold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                        >
-                            {loading ? 'Posting...' : 'Post'}
-                        </button>
+
+                        <div className="flex items-center gap-4">
+                            {content.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <div className="relative w-6 h-6 flex items-center justify-center">
+                                        <svg className="transform -rotate-90 w-full h-full">
+                                            <circle
+                                                cx="12"
+                                                cy="12"
+                                                r={radius}
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                fill="transparent"
+                                                className="text-muted"
+                                            />
+                                            <circle
+                                                cx="12"
+                                                cy="12"
+                                                r={radius}
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                fill="transparent"
+                                                strokeDasharray={circumference}
+                                                strokeDashoffset={strokeDashoffset}
+                                                className={`${isOverLimit ? 'text-red-500' : (isNearLimit ? 'text-yellow-500' : 'text-primary')} transition-all duration-300`}
+                                            />
+                                        </svg>
+                                    </div>
+                                    {isNearLimit && (
+                                        <span className={`text-xs ${isOverLimit ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
+                                            {MAX_LENGTH - content.length}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="h-8 w-[1px] bg-border mx-1"></div>
+
+                            <button
+                                type="submit"
+                                disabled={(!content.trim() && !selectedFile) || loading || isOverLimit}
+                                className="rounded-full bg-primary px-4 py-2 font-bold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                            >
+                                {loading ? 'Posting...' : 'Post'}
+                            </button>
+                        </div>
                     </div>
                 )}
             </form>

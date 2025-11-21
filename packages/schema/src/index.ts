@@ -12,7 +12,7 @@ export const SigninSchema = z.object({
 });
 
 export const CreatePostSchema = z.object({
-    content: z.string().max(280).optional(),
+    content: z.string().max(10000).optional(),
     parentId: z.string().optional(),
     repostId: z.string().optional(),
     quoteId: z.string().optional(),

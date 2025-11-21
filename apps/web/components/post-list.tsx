@@ -27,6 +27,31 @@ interface Post {
     image?: string | null;
 }
 
+function PostContent({ content }: { content: string }) {
+    const [expanded, setExpanded] = useState(false);
+    const MAX_LENGTH = 280;
+    const shouldTruncate = content.length > MAX_LENGTH;
+
+    const displayContent = expanded || !shouldTruncate ? content : content.slice(0, MAX_LENGTH) + '...';
+
+    return (
+        <div className="text-foreground whitespace-pre-wrap break-words mb-3">
+            {displayContent}
+            {shouldTruncate && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setExpanded(!expanded);
+                    }}
+                    className="text-primary hover:underline ml-1 font-medium"
+                >
+                    {expanded ? 'Show less' : 'Show more'}
+                </button>
+            )}
+        </div>
+    );
+}
+
 export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string }) {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
@@ -207,9 +232,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                     </div>
 
                                     {contentPost.content && (
-                                        <div className="text-foreground whitespace-pre-wrap break-words mb-3">
-                                            {contentPost.content}
-                                        </div>
+                                        <PostContent content={contentPost.content} />
                                     )}
 
                                     {contentPost.image && (
