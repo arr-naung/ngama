@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import { API_URL } from '../../constants';
 import { getToken } from '../../lib/auth';
 
@@ -11,6 +12,7 @@ export default function EditProfileScreen() {
     const [image, setImage] = useState('');
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const { colorScheme } = useColorScheme();
 
     useEffect(() => {
         fetchProfile();
@@ -79,22 +81,22 @@ export default function EditProfileScreen() {
 
     if (initialLoading) {
         return (
-            <View className="flex-1 bg-black justify-center items-center">
-                <ActivityIndicator color="white" />
+            <View className="flex-1 bg-white dark:bg-black justify-center items-center">
+                <ActivityIndicator color={colorScheme === 'dark' ? 'white' : 'black'} />
             </View>
         );
     }
 
     return (
-        <View className="flex-1 bg-black p-4">
+        <View className="flex-1 bg-white dark:bg-black p-4">
             <Stack.Screen
                 options={{
                     title: 'Edit Profile',
-                    headerTintColor: 'white',
-                    headerStyle: { backgroundColor: 'black' },
+                    headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
+                    headerStyle: { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' },
                     headerRight: () => (
                         <TouchableOpacity onPress={handleSave} disabled={loading}>
-                            <Text className={`text-white font-bold ${loading ? 'opacity-50' : ''}`}>Save</Text>
+                            <Text className={`text-blue-500 font-bold ${loading ? 'opacity-50' : ''}`}>Save</Text>
                         </TouchableOpacity>
                     )
                 }}
@@ -104,22 +106,22 @@ export default function EditProfileScreen() {
                 <View>
                     <Text className="text-gray-500 mb-1">Name</Text>
                     <TextInput
-                        className="bg-gray-900 text-white p-3 rounded-lg"
+                        className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg"
                         value={name}
                         onChangeText={setName}
                         placeholder="Name"
-                        placeholderTextColor="#666"
+                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
                     />
                 </View>
 
                 <View>
                     <Text className="text-gray-500 mb-1">Bio</Text>
                     <TextInput
-                        className="bg-gray-900 text-white p-3 rounded-lg h-24"
+                        className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg h-24"
                         value={bio}
                         onChangeText={setBio}
                         placeholder="Bio"
-                        placeholderTextColor="#666"
+                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
                         multiline
                         textAlignVertical="top"
                     />
@@ -128,11 +130,11 @@ export default function EditProfileScreen() {
                 <View>
                     <Text className="text-gray-500 mb-1">Profile Image URL</Text>
                     <TextInput
-                        className="bg-gray-900 text-white p-3 rounded-lg"
+                        className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg"
                         value={image}
                         onChangeText={setImage}
                         placeholder="https://..."
-                        placeholderTextColor="#666"
+                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
                         autoCapitalize="none"
                     />
                 </View>

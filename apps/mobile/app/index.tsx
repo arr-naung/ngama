@@ -4,16 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Landing() {
     return (
-        <SafeAreaView className="flex-1 bg-black items-center justify-center p-8">
-            <Text className="text-white text-4xl font-bold mb-12">X</Text>
+        <SafeAreaView className="flex-1 bg-white dark:bg-black items-center justify-center p-8">
+            <Text className="text-black dark:text-white text-4xl font-bold mb-12">X</Text>
 
-            <Text className="text-white text-3xl font-bold mb-12 text-center">
+            <Text className="text-black dark:text-white text-3xl font-bold mb-12 text-center">
                 See what's happening in the world right now.
             </Text>
 
             <Link href="/auth/signup" asChild>
-                <TouchableOpacity className="w-full bg-white rounded-full py-4 mb-4 items-center">
-                    <Text className="text-black font-bold text-lg">Create account</Text>
+                <TouchableOpacity className="w-full bg-black dark:bg-white rounded-full py-4 mb-4 items-center">
+                    <Text className="text-white dark:text-black font-bold text-lg">Create account</Text>
                 </TouchableOpacity>
             </Link>
 

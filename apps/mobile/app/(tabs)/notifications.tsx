@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { API_URL } from '../constants';
-import { getToken } from '../lib/auth';
+import { useColorScheme } from 'nativewind';
+import { API_URL, getImageUrl } from '../../constants';
+import { getToken } from '../../lib/auth';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Notification {
     id: string;
@@ -24,12 +26,11 @@ export default function NotificationsScreen() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { colorScheme } = useColorScheme();
 
     useEffect(() => {
         fetchNotifications();
     }, []);
-
-
 
     const fetchNotifications = async () => {
         try {
@@ -55,15 +56,19 @@ export default function NotificationsScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-black justify-center items-center">
-                <ActivityIndicator color="white" />
+            <View className="flex-1 bg-white dark:bg-black justify-center items-center">
+                <ActivityIndicator color={colorScheme === 'dark' ? 'white' : 'black'} />
             </View>
         );
     }
 
     return (
-        <View className="flex-1 bg-black">
-            <Stack.Screen options={{ title: 'Notifications', headerTintColor: 'white', headerStyle: { backgroundColor: 'black' } }} />
+        <View className="flex-1 bg-white dark:bg-black">
+            <Stack.Screen options={{
+                title: 'Notifications',
+                headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
+                headerStyle: { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }
+            }} />
 
             <FlatList
                 data={notifications}
@@ -75,7 +80,7 @@ export default function NotificationsScreen() {
                 }
                 renderItem={({ item }) => (
                     <TouchableOpacity
-                        className={`p-4 border-b border-gray-800 flex-row gap-4 ${!item.read ? 'bg-blue-900/10' : ''}`}
+                        className={`p-4 border-b border-gray-200 dark:border-gray-800 flex-row gap-4 ${!item.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
                         onPress={() => {
                             if (item.post) {
                                 router.push(`/post/${item.post.id}`);
@@ -84,27 +89,25 @@ export default function NotificationsScreen() {
                             }
                         }}
                     >
-                        <View className="w-8 items-center">
-                            <Text className="text-2xl">
-                                {item.type === 'LIKE' && '❤️'}
-                                {item.type === 'FOLLOW' && '👤'}
-                                {item.type === 'REPLY' && '💬'}
-                            </Text>
+                        <View className="w-8 items-center pt-1">
+                            {item.type === 'LIKE' && <Ionicons name="heart" size={24} color="#F91880" />}
+                            {item.type === 'FOLLOW' && <Ionicons name="person" size={24} color="#1D9BF0" />}
+                            {item.type === 'REPLY' && <Ionicons name="chatbubble" size={24} color="#1D9BF0" />}
                         </View>
                         <View className="flex-1">
                             <View className="flex-row items-center gap-2 mb-1">
-                                <View className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden">
+                                <View className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
                                     {item.actor.image ? (
-                                        <Image source={{ uri: item.actor.image }} className="w-full h-full" />
+                                        <Image source={{ uri: getImageUrl(item.actor.image)! }} className="w-full h-full" />
                                     ) : (
-                                        <View className="w-full h-full justify-center items-center">
-                                            <Text className="text-white text-xs">{item.actor.username[0].toUpperCase()}</Text>
+                                        <View className="w-full h-full justify-center items-center bg-gray-300 dark:bg-gray-700">
+                                            <Text className="text-black dark:text-white text-xs font-bold">{item.actor.username[0].toUpperCase()}</Text>
                                         </View>
                                     )}
                                 </View>
-                                <Text className="text-white font-bold">{item.actor.username}</Text>
+                                <Text className="text-black dark:text-white font-bold text-base">{item.actor.username}</Text>
                             </View>
-                            <Text className="text-gray-400">
+                            <Text className="text-gray-400 text-base">
                                 {item.type === 'LIKE' && 'liked your post'}
                                 {item.type === 'FOLLOW' && 'followed you'}
                                 {item.type === 'REPLY' && 'replied to your post'}

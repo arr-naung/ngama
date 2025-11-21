@@ -28,14 +28,16 @@ export default function Signin() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Signin failed');
+                setError(data.error || 'Something went wrong');
+                setLoading(false);
+                return;
             }
 
-            console.log('Token:', data.token);
             await saveAuth(data.token, data.user);
-            router.replace('/');
-        } catch (err: any) {
-            setError(err.message);
+            router.replace('/(tabs)/feed');
+        } catch (error) {
+            setError('Network error');
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -84,6 +86,10 @@ export default function Signin() {
                 ) : (
                     <Text className="text-black font-bold text-lg">Log in</Text>
                 )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push('/auth/signup')}>
+                <Text className="text-gray-500 text-center">Don't have an account? Sign up</Text>
             </TouchableOpacity>
         </SafeAreaView>
     );

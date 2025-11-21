@@ -29,15 +29,16 @@ export default function Signup() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Signup failed');
+                setError(data.error || 'Something went wrong');
+                setLoading(false);
+                return;
             }
 
-            // Store token in SecureStore
-            console.log('Token:', data.token);
             await saveAuth(data.token, data.user);
-            router.replace('/');
-        } catch (err: any) {
-            setError(err.message);
+            router.replace('/(tabs)/feed');
+        } catch (error) {
+            setError('Network error');
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -95,6 +96,10 @@ export default function Signup() {
                 ) : (
                     <Text className="text-black font-bold text-lg">Sign up</Text>
                 )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push('/auth/signin')}>
+                <Text className="text-gray-500 text-center">Already have an account? Log in</Text>
             </TouchableOpacity>
         </SafeAreaView>
     );

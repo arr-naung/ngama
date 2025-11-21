@@ -30,3 +30,5 @@ export async function clearAuth() {
 export async function getToken() {
     return await SecureStore.getItemAsync(TOKEN_KEY);
 }
+
+export const removeToken = clearAuth;
