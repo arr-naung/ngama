@@ -25,6 +25,7 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
     const [user, setUser] = useState<{ image: string | null; username: string } | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [showFullQuotedPost, setShowFullQuotedPost] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -119,19 +120,23 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
                 body: JSON.stringify({
                     content,
                     quoteId: post.id,
-                    image: imageUrl
+                    ...(imageUrl && { image: imageUrl }) // Only include if imageUrl exists
                 })
             });
 
-            if (!res.ok) throw new Error('Failed to post');
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                console.error('Quote post failed:', { status: res.status, error: errorData });
+                throw new Error(`Failed to post: ${JSON.stringify(errorData)}`);
+            }
 
             setContent('');
             removeImage();
             onClose();
             window.location.reload();
         } catch (error) {
-            console.error(error);
-            alert('Failed to quote post');
+            console.error('Quote error:', error);
+            alert(`Failed to quote post: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
@@ -169,7 +174,7 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
                         <textarea
                             className="w-full bg-transparent text-xl text-foreground placeholder:text-muted-foreground focus:outline-none resize-none"
                             placeholder="Add a comment..."
-                            rows={3}
+                            rows={5}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             autoFocus
@@ -199,8 +204,25 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
                                 <span className="text-muted-foreground text-sm">@{post.author.username}</span>
                                 <span className="text-muted-foreground text-sm">· {new Date(post.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div className="text-foreground text-sm">
-                                {post.content}
+                            <div className="text-foreground text-sm whitespace-pre-wrap break-words">
+                                {post.content && (
+                                    <>
+                                        {showFullQuotedPost || !post.content || post.content.length <= 150
+                                            ? post.content
+                                            : post.content.slice(0, 150) + '...'}
+                                        {post.content && post.content.length > 150 && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowFullQuotedPost(!showFullQuotedPost);
+                                                }}
+                                                className="text-primary hover:underline ml-1"
+                                            >
+                                                {showFullQuotedPost ? 'Show less' : 'Show more'}
+                                            </button>
+                                        )}
+                                    </>
+                                )}
                             </div>
                             {post.image && (
                                 <div className="mt-2 rounded-lg overflow-hidden border border-border">

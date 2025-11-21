@@ -18,12 +18,20 @@ export const CreatePostSchema = z.object({
     quoteId: z.string().optional(),
     image: z.string().optional()
 }).refine(data => {
-    // Content is required unless it's a pure repost or has an image
-    if (data.repostId) return true;
+    // Content is required unless:
+    // 1. It's a pure repost (repostId without quoteId)
+    // 2. It has an image (for quotes or regular posts)
+
+    // Pure repost (no content needed)
+    if (data.repostId && !data.quoteId) return true;
+
+    // Has image (content optional for quotes or regular posts)
     if (data.image) return true;
+
+    // Otherwise, content is required
     return !!data.content && data.content.length > 0;
 }, {
-    message: "Content is required unless reposting",
+    message: "Content or image is required",
     path: ["content"]
 });
 

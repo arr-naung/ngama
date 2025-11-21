@@ -19,6 +19,7 @@ export default function Compose() {
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [referencedPost, setReferencedPost] = useState<any>(null);
+    const [showFullQuotedPost, setShowFullQuotedPost] = useState(false);
     const { colorScheme } = useColorScheme();
 
     useEffect(() => {
@@ -111,7 +112,8 @@ export default function Compose() {
                 }
             }
 
-            const body: any = { content, image: imageUrl };
+            const body: any = { content };
+            if (imageUrl) body.image = imageUrl;
             if (replyToId) body.parentId = replyToId;
             if (quoteId) body.quoteId = quoteId;
 
@@ -185,9 +187,11 @@ export default function Compose() {
                             placeholder={replyToId ? "Post your reply" : (quoteId ? "Add a comment" : "What is happening?!")}
                             placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
                             multiline
+                            numberOfLines={quoteId ? 5 : 3}
                             autoFocus
                             value={content}
                             onChangeText={setContent}
+                            style={{ minHeight: quoteId ? 120 : 80, textAlignVertical: 'top' }}
                         />
 
                         {/* Quote Preview */}
@@ -209,7 +213,20 @@ export default function Compose() {
                                     <Text className="text-gray-500 text-sm">@{referencedPost.author.username}</Text>
                                     <Text className="text-gray-500 text-sm">· {new Date(referencedPost.createdAt).toLocaleDateString()}</Text>
                                 </View>
-                                <Text className="text-black dark:text-white text-sm">{referencedPost.content}</Text>
+                                <View>
+                                    <Text className="text-black dark:text-white text-sm">
+                                        {showFullQuotedPost || !referencedPost.content || referencedPost.content.length <= 150
+                                            ? referencedPost.content
+                                            : referencedPost.content.slice(0, 150) + '...'}
+                                    </Text>
+                                    {referencedPost.content && referencedPost.content.length > 150 && (
+                                        <TouchableOpacity onPress={() => setShowFullQuotedPost(!showFullQuotedPost)}>
+                                            <Text className="text-blue-500 text-sm mt-1">
+                                                {showFullQuotedPost ? 'Show less' : 'Show more'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
                                 {referencedPost.image && (
                                     <Image
                                         source={{ uri: getImageUrl(referencedPost.image)! }}

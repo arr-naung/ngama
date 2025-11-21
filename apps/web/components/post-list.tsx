@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ReplyModal from './reply-modal';
 import QuoteModal from './quote-modal';
+import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon } from './icons';
+import { PostContent, QuotedPostContent } from './post-content';
 
 interface Post {
     id: string;
@@ -25,31 +27,6 @@ interface Post {
     repost?: Post;
     quote?: Post;
     image?: string | null;
-}
-
-function PostContent({ content }: { content: string }) {
-    const [expanded, setExpanded] = useState(false);
-    const MAX_LENGTH = 280;
-    const shouldTruncate = content.length > MAX_LENGTH;
-
-    const displayContent = expanded || !shouldTruncate ? content : content.slice(0, MAX_LENGTH) + '...';
-
-    return (
-        <div className="text-foreground whitespace-pre-wrap break-words mb-3">
-            {displayContent}
-            {shouldTruncate && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setExpanded(!expanded);
-                    }}
-                    className="text-primary hover:underline ml-1 font-medium"
-                >
-                    {expanded ? 'Show less' : 'Show more'}
-                </button>
-            )}
-        </div>
-    );
 }
 
 export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string }) {
@@ -81,8 +58,17 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
 
             const res = await fetch(apiUrl, { headers });
             const data = await res.json();
-            if (Array.isArray(data)) {
+            console.log('[PostList] Fetched data:', data);
+
+            // Handle new pagination format  
+            if (data.posts && Array.isArray(data.posts)) {
+                setPosts(data.posts);
+            } else if (Array.isArray(data)) {
+                // Fallback for old format (backward compatible)
                 setPosts(data);
+            } else {
+                console.error('[PostList] Unexpected data format:', data);
+                setPosts([]);
             }
         } catch (error) {
             console.error('Failed to fetch posts', error);
@@ -261,7 +247,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                                 <span className="text-muted-foreground text-sm">· {new Date(contentPost.quote.createdAt).toLocaleDateString()}</span>
                                             </div>
                                             <div className="text-foreground text-sm whitespace-pre-wrap break-words">
-                                                {contentPost.quote.content}
+                                                <QuotedPostContent content={contentPost.quote.content || ''} />
                                             </div>
                                             {contentPost.quote.image && (
                                                 <div className="mt-2 rounded-lg overflow-hidden border border-border">
@@ -281,7 +267,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                             }}
                                         >
                                             <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
-                                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"></path></g></svg>
+                                                <ReplyIcon />
                                             </div>
                                             <span className="text-sm">{contentPost._count?.replies || 0}</span>
                                         </button>
@@ -296,7 +282,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                                 }}
                                             >
                                                 <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                                                    <RepostIcon />
                                                 </div>
                                                 <span className="text-sm">{(contentPost._count?.reposts || 0) + (contentPost._count?.quotes || 0)}</span>
                                             </button>
@@ -310,7 +296,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                                             handleRepost(contentPost);
                                                         }}
                                                     >
-                                                        <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                                                        <RepostIcon className="w-4 h-4" />
                                                         Repost
                                                     </button>
                                                     <button
@@ -321,7 +307,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                                             setQuotingPost(contentPost);
                                                         }}
                                                     >
-                                                        <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M14.23 2.854c.98-.177 1.762-.825 1.762-1.854h-2.01c0 .49-.22.83-.53.83-.17 0-.36-.04-.5-.1a.99.99 0 0 0-1.12.23c-.2.24-.26.56-.17.85.35 1.14 1.4 1.97 2.578 2.044zM19.5 13c-1.7 0-3.24.49-4.55 1.33L13.6 13H11v9.5h2.55l1.35-1.35c1.31-.84 2.85-1.33 4.55-1.33.49 0 .96.04 1.42.12V10.9c-.46-.08-.93-.12-1.42-.12zM7 13c-1.7 0-3.24.49-4.55 1.33L1.1 13H-1.5v9.5H1.1l1.35-1.35C3.76 20.31 5.3 19.82 7 19.82c.49 0 .96.04 1.42.12V10.9C7.96 10.82 7.49 10.78 7 10.78z"></path><path d="M20.5 3H5.5c-1.38 0-2.5 1.12-2.5 2.5v11.33c1.17-.94 2.67-1.51 4.29-1.51 1.63 0 3.13.57 4.3 1.51 1.17-.94 2.67-1.51 4.29-1.51 1.63 0 3.13.57 4.3 1.51V5.5c0-1.38-1.12-2.5-2.5-2.5zm-1.5 9h-2v-2h2v2zm0-4h-2V6h2v2z"></path></g></svg>
+                                                        <QuoteIcon />
                                                         Quote
                                                     </button>
                                                 </div>
@@ -334,18 +320,14 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                                             onClick={(e) => handleLike(contentPost.id, contentPost.isLikedByMe, e)}
                                         >
                                             <div className="p-2 rounded-full group-hover:bg-pink-600/10 transition-colors">
-                                                {contentPost.isLikedByMe ? (
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
-                                                ) : (
-                                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
-                                                )}
+                                                <HeartIcon filled={contentPost.isLikedByMe} />
                                             </div>
                                             <span className="text-sm">{contentPost._count.likes}</span>
                                         </button>
 
                                         <button className="group flex items-center gap-2 hover:text-blue-500 transition-colors">
                                             <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
-                                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"></path></g></svg>
+                                                <ViewsIcon />
                                             </div>
                                             <span className="text-sm">0</span>
                                         </button>

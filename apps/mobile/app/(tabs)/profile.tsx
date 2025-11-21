@@ -247,7 +247,7 @@ export default function ProfileScreen() {
                                         <Text className="text-gray-500 text-base">{item._count?.replies || 0}</Text>
                                     </View>
                                     <View className="flex-row items-center gap-1">
-                                        <Ionicons name="repeat-outline" size={18} color="gray" />
+                                        <Ionicons name="git-compare-outline" size={18} color="gray" />
                                         <Text className="text-gray-500 text-base">{(item._count?.reposts || 0) + (item._count?.quotes || 0)}</Text>
                                     </View>
                                     <View className="flex-row items-center gap-1">

@@ -18,7 +18,22 @@ export async function GET(request: Request) {
             }
         }
 
+        // Extract pagination parameters from URL
+        const { searchParams } = new URL(request.url);
+        const cursor = searchParams.get('cursor');
+        const limit = parseInt(searchParams.get('limit') || '20', 10);
+
+        // Validate limit (between 1 and 50)
+        const validLimit = Math.min(Math.max(limit, 1), 50);
+
         const posts = await prisma.post.findMany({
+            take: validLimit + 1, // Fetch one extra to check if there are more
+            ...(cursor && {
+                cursor: {
+                    id: cursor
+                },
+                skip: 1 // Skip the cursor item
+            }),
             where: {
                 parentId: null
             },
@@ -82,21 +97,36 @@ export async function GET(request: Request) {
             }
         });
 
-        const postsWithLikeStatus = posts.map(post => {
-            const mapPost = (p: any) => ({
-                ...p,
-                isLikedByMe: p.likes ? p.likes.length > 0 : false,
-                likes: undefined
-            });
+        // Check if there are more results
+        const hasMore = posts.length > validLimit;
+        const postsToReturn = hasMore ? posts.slice(0, validLimit) : posts;
+
+        const postsWithLikeStatus = postsToReturn.map(post => {
+            type PostLikeData = typeof post;
+
+            const mapPost = (p: PostLikeData | NonNullable<PostLikeData['repost']> | NonNullable<PostLikeData['quote']>): any => {
+                const result: any = {
+                    ...p,
+                    isLikedByMe: p.likes && Array.isArray(p.likes) ? p.likes.length > 0 : false,
+                    likes: undefined
+                };
+                return result;
+            };
 
             const mappedPost = mapPost(post);
-            if (mappedPost.repost) mappedPost.repost = mapPost(mappedPost.repost);
-            if (mappedPost.quote) mappedPost.quote = mapPost(mappedPost.quote);
+            if (post.repost) mappedPost.repost = mapPost(post.repost);
+            if (post.quote) mappedPost.quote = mapPost(post.quote);
 
             return mappedPost;
         });
 
-        return NextResponse.json(postsWithLikeStatus);
+        // Return posts with pagination metadata
+        const lastPost = postsToReturn[postsToReturn.length - 1];
+        return NextResponse.json({
+            posts: postsWithLikeStatus,
+            nextCursor: hasMore && lastPost ? lastPost.id : null,
+            hasMore
+        });
     } catch (error) {
         console.error('Feed error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -119,6 +149,26 @@ export async function POST(request: Request) {
 
         if (!payload || typeof payload === 'string' || !payload.userId) {
             return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        }
+
+        // Rate limiting check for post creation (after auth)
+        const { checkRateLimit, RateLimitPresets, getClientIdentifier } = await import('@/lib/rate-limit');
+        const clientId = getClientIdentifier(request, payload.userId);
+        const rateLimit = checkRateLimit(clientId, RateLimitPresets.WRITE);
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: 'Too many posts. Please slow down.' },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': String(RateLimitPresets.WRITE.limit),
+                        'X-RateLimit-Remaining': String(rateLimit.remaining),
+                        'X-RateLimit-Reset': String(rateLimit.resetTime),
+                        'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000))
+                    }
+                }
+            );
         }
 
         const body = await request.json();

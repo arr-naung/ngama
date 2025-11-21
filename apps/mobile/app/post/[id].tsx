@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
+import { QuotedPostContent } from '../../components/post-content';
 
 export default function PostDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -246,7 +247,7 @@ export default function PostDetailsScreen() {
                                 router.push(`/post/${contentPost.quote!.id}`);
                             }}
                         >
-                            <Text className="text-black dark:text-white text-sm">{contentPost.quote.content}</Text>
+                            <QuotedPostContent content={contentPost.quote.content || ''} />
                             {contentPost.quote.image && (
                                 <Image
                                     source={{ uri: getImageUrl(contentPost.quote.image)! }}
@@ -286,7 +287,7 @@ export default function PostDetailsScreen() {
                             onPress={() => openRepostModal(contentPost)}
                             className="p-2"
                         >
-                            <Ionicons name="repeat-outline" size={24} color="gray" />
+                            <Ionicons name="git-compare-outline" size={24} color="gray" />
                         </TouchableOpacity>
                         <TouchableOpacity
                             className="p-2"
@@ -379,7 +380,7 @@ export default function PostDetailsScreen() {
                                     <Text className="text-gray-500 text-sm">@{contentPost.quote.author.username}</Text>
                                     <Text className="text-gray-500 text-sm">· {new Date(contentPost.quote.createdAt).toLocaleDateString()}</Text>
                                 </View>
-                                <Text className="text-black dark:text-white text-sm">{contentPost.quote.content}</Text>
+                                <QuotedPostContent content={contentPost.quote.content || ''} />
                                 {contentPost.quote.image && (
                                     <Image
                                         source={{ uri: getImageUrl(contentPost.quote.image)! }}
@@ -402,7 +403,7 @@ export default function PostDetailsScreen() {
                                 className="flex-row items-center gap-1"
                                 onPress={() => openRepostModal(contentPost)}
                             >
-                                <Ionicons name="repeat-outline" size={20} color="gray" />
+                                <Ionicons name="git-compare-outline" size={20} color="gray" />
                                 <Text className="text-gray-500 text-base">{(contentPost._count.reposts || 0) + (contentPost._count.quotes || 0)}</Text>
                             </TouchableOpacity>
                             <View className="flex-row items-center gap-1">

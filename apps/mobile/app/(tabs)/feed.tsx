@@ -7,6 +7,7 @@ import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../../components/sidebar';
+import { PostContent, QuotedPostContent } from '../../components/post-content';
 
 interface Post {
     id: string;
@@ -73,7 +74,11 @@ export default function Feed() {
             try {
                 const data = JSON.parse(text);
                 if (res.ok) {
-                    if (Array.isArray(data)) {
+                    // Handle new pagination format: {posts, nextCursor, hasMore}
+                    if (data.posts && Array.isArray(data.posts)) {
+                        setPosts(data.posts);
+                    } else if (Array.isArray(data)) {
+                        // Fallback for old format (backward compatible)
                         setPosts(data);
                     }
                 } else {
@@ -216,7 +221,7 @@ export default function Feed() {
                         </View>
 
                         {contentPost.content && (
-                            <Text className="mt-1 text-black dark:text-white text-lg leading-6">{contentPost.content}</Text>
+                            <PostContent content={contentPost.content} />
                         )}
 
                         {contentPost.image && (
@@ -251,7 +256,7 @@ export default function Feed() {
                                     <Text className="text-gray-500 text-base">@{contentPost.quote.author.username}</Text>
                                     <Text className="text-gray-500 text-base">· {new Date(contentPost.quote.createdAt).toLocaleDateString()}</Text>
                                 </View>
-                                <Text className="text-black dark:text-white text-base">{contentPost.quote.content}</Text>
+                                <QuotedPostContent content={contentPost.quote.content || ''} />
                                 {contentPost.quote.image && (
                                     <Image
                                         source={{ uri: getImageUrl(contentPost.quote.image)! }}
@@ -274,7 +279,7 @@ export default function Feed() {
                                 className="flex-row items-center gap-1"
                                 onPress={() => openRepostModal(contentPost)}
                             >
-                                <Ionicons name="repeat-outline" size={20} color="gray" />
+                                <Ionicons name="git-compare-outline" size={20} color="gray" />
                                 <Text className="text-gray-500 text-base">{(contentPost._count.reposts || 0) + (contentPost._count.quotes || 0)}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -313,7 +318,7 @@ export default function Feed() {
                         )}
                     </View>
                 </TouchableOpacity>
-                <Ionicons name="logo-twitter" size={24} color={useColorScheme().colorScheme === 'dark' ? 'white' : 'black'} />
+                <Text className="text-black dark:text-white text-2xl font-bold">𝕏</Text>
                 <View className="w-8" />
             </View>
 

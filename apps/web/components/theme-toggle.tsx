@@ -1,6 +1,7 @@
 'use client';
 
 import { useTheme } from './theme-provider';
+import { SunIcon, MoonIcon } from './icons';
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme();
@@ -10,8 +11,8 @@ export function ThemeToggle() {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors w-full"
         >
-            <span>{theme === 'dark' ? '🌙' : '☀️'}</span>
-            <span className="hidden md:inline">Theme</span>
+            {theme === 'dark' ? <MoonIcon /> : <SunIcon />}
+            <span className="hidden md:inline">Display</span>
         </button>
     );
 }

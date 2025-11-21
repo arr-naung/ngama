@@ -112,7 +112,11 @@ export default function PostInput({
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ content, parentId, image: imageUrl })
+                body: JSON.stringify({
+                    content,
+                    parentId,
+                    ...(imageUrl && { image: imageUrl })
+                })
             });
 
             if (!res.ok) throw new Error('Failed to post');

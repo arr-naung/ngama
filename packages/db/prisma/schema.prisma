@@ -53,6 +53,11 @@ model Post {
   quotes    Post[]   @relation("PostQuotes")
 
   notifications Notification[]
+
+  @@index([authorId, createdAt])
+  @@index([parentId, createdAt])
+  @@index([repostId])
+  @@index([quoteId])
 }
 
 model Like {
@@ -74,6 +79,8 @@ model Follow {
   following   User     @relation("UserFollows", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model Notification {
@@ -88,4 +95,7 @@ model Notification {
   user      User     @relation("UserNotifications", fields: [userId], references: [id])
   actor     User     @relation("NotificationActor", fields: [actorId], references: [id])
   post      Post?    @relation(fields: [postId], references: [id])
+
+  @@index([userId, read, createdAt])
+  @@index([actorId])
 }

@@ -6,6 +6,8 @@ import Link from 'next/link';
 import PostInput from '@/components/post-input';
 import ReplyModal from '@/components/reply-modal';
 import QuoteModal from '@/components/quote-modal';
+import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon } from '@/components/icons';
+import { QuotedPostContent } from '@/components/post-content';
 
 interface Post {
     id: string;
@@ -233,7 +235,7 @@ export default function PostPage() {
                             <span className="text-muted-foreground text-sm">@{p.quote.author.username}</span>
                         </div>
                         <div className="text-foreground text-sm whitespace-pre-wrap break-words">
-                            {p.quote.content}
+                            <QuotedPostContent content={p.quote.content || ''} />
                         </div>
                         {p.quote.image && (
                             <div className="mt-2 rounded-lg overflow-hidden border border-border">
@@ -308,11 +310,7 @@ export default function PostPage() {
                         onClick={(e) => handleLike(contentPost.id, contentPost.isLikedByMe, e)}
                     >
                         <div className="p-2 rounded-full group-hover:bg-pink-600/10 transition-colors">
-                            {contentPost.isLikedByMe ? (
-                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
-                            ) : (
-                                <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
-                            )}
+                            <HeartIcon filled={contentPost.isLikedByMe} />
                         </div>
                         <span className="text-sm">{contentPost._count.likes}</span>
                     </button>
@@ -409,9 +407,9 @@ export default function PostPage() {
                                     onClick={(e) => handleLike(ancestor.id, ancestor.isLikedByMe, e)}
                                 >
                                     {ancestor.isLikedByMe ? (
-                                        <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
+                                        <HeartIcon filled={true} className="w-4 h-4" />
                                     ) : (
-                                        <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><g><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
+                                        <HeartIcon filled={false} className="w-4 h-4" />
                                     )}
                                     <span className="text-xs">{ancestor._count.likes}</span>
                                 </button>
@@ -553,11 +551,7 @@ export default function PostPage() {
                                     onClick={(e) => handleLike(reply.id, reply.isLikedByMe, e)}
                                 >
                                     <div className="p-2 rounded-full group-hover:bg-pink-600/10 transition-colors">
-                                        {reply.isLikedByMe ? (
-                                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
-                                        ) : (
-                                            <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.505.3-.505-.3c-4.378-2.55-7.028-5.19-8.379-7.67-1.06-1.94-1.14-4.17-.22-6.1 1.25-2.61 4.3-4.41 7.12-3.25 2.43 1 3.83 4.01 1.98 6.43h4.06c-1.85-2.42-.45-5.43 1.98-6.43 2.82-1.16 5.87.64 7.12 3.25.92 1.93.84 4.16-.22 6.1z"></path></g></svg>
-                                        )}
+                                        <HeartIcon filled={reply.isLikedByMe} />
                                     </div>
                                     <span className="text-sm">{reply._count.likes}</span>
                                 </button>

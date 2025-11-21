@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
+import { XLogo, HomeIcon, SearchIcon, NotificationsIcon, ProfileIcon } from './icons';
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -48,26 +49,26 @@ export default function Sidebar() {
 
     return (
         <div className="fixed left-0 top-0 h-full w-64 bg-background p-4 hidden md:flex flex-col">
-            <div className="mb-8 px-4">
-                <h1 className="text-2xl font-bold text-foreground">X-Clone</h1>
+            <div className="mb-4 px-4 py-2">
+                <XLogo className="w-8 h-8" />
             </div>
 
             <nav className="flex-1 space-y-2">
-                <Link href="/" className="flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors">
-                    <span>🏠</span>
+                <Link href="/" className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === '/' ? 'font-bold' : ''}`}>
+                    <HomeIcon filled={pathname === '/'} />
                     <span>Home</span>
                 </Link>
-                <Link href="/search" className="flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors">
-                    <span>🔍</span>
+                <Link href="/search" className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === '/search' ? 'font-bold' : ''}`}>
+                    <SearchIcon />
                     <span>Search</span>
                 </Link>
-                <Link href="/notifications" className="flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors">
-                    <span>🔔</span>
+                <Link href="/notifications" className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === '/notifications' ? 'font-bold' : ''}`}>
+                    <NotificationsIcon filled={pathname === '/notifications'} />
                     <span>Notifications</span>
                 </Link>
                 {username && (
-                    <Link href={`/u/${username}`} className="flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors">
-                        <span>👤</span>
+                    <Link href={`/u/${username}`} className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === `/u/${username}` ? 'font-bold' : ''}`}>
+                        <ProfileIcon filled={pathname === `/u/${username}`} />
                         <span>Profile</span>
                     </Link>
                 )}

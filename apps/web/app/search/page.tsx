@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { SearchIcon } from '@/components/icons';
 
 interface SearchResults {
     users: Array<{
@@ -73,11 +74,13 @@ export default function SearchPage() {
                     <input
                         type="text"
                         placeholder="Search"
-                        className="w-full bg-muted text-foreground rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full bg-muted text-foreground rounded-full py-2 px-4 pl-12 focus:outline-none focus:ring-1 focus:ring-primary"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
-                    <span className="absolute left-3 top-2.5 text-muted-foreground">🔍</span>
+                    <span className="absolute left-4 top-2 text-muted-foreground">
+                        <SearchIcon className="w-5 h-5 mt-0.5" />
+                    </span>
                 </div>
             </div>
 
