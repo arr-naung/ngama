@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
+import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList, RefreshControl, Modal } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { API_URL, getImageUrl } from '../../constants';
+import { getToken } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { UserAvatar } from '../../components/ui/user-avatar';
-import { PostStats } from '../../components/ui/post-stats';
-import { PostContent } from '../../components/post-content';
+import { PostCard } from '../../components/ui/post-card';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -23,11 +23,12 @@ export default function ProfileScreen() {
     const [followingCount, setFollowingCount] = useState(0);
     const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'likes'>('posts');
     const { colorScheme } = useColorScheme();
+    const [repostModalVisible, setRepostModalVisible] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<any>(null);
 
     const fetchProfile = async () => {
         try {
-            // TODO: Get token from secure store
-            const token = null;
+            const token = await getToken();
             const headers: HeadersInit = {};
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -58,7 +59,7 @@ export default function ProfileScreen() {
 
     const fetchPosts = async () => {
         try {
-            const token = null; // TODO
+            const token = await getToken();
             const headers: HeadersInit = {};
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -208,95 +209,99 @@ export default function ProfileScreen() {
         </>
     );
 
-    const renderItem = ({ item }: { item: any }) => {
-        const isRepost = !!item.repost;
-        const contentPost = item.repost ? item.repost : item;
+    const handleLike = async (postId: string, currentLiked: boolean) => {
+        // Optimistic update
+        setPosts(posts.map(p => {
+            if (p.id === postId) {
+                return {
+                    ...p,
+                    isLikedByMe: !currentLiked,
+                    _count: {
+                        ...p._count,
+                        likes: currentLiked ? p._count.likes - 1 : p._count.likes + 1
+                    }
+                };
+            }
+            return p;
+        }));
 
-        return (
-            <TouchableOpacity
-                className="border-b border-gray-200 dark:border-gray-800 p-2"
-                onPress={() => router.push(`/post/${contentPost.id}`)}
-            >
-                {isRepost && (
-                    <View className="flex-row items-center gap-2 mb-2 ml-8">
-                        <Ionicons name="repeat" size={16} color="#9CA3AF" />
-                        <Text className="text-gray-400 text-base font-bold">
-                            {item.author.name || item.author.username} Reposted
-                        </Text>
-                    </View>
-                )}
+        try {
+            const token = await getToken();
+            if (!token) return;
 
-                <View className="flex-row gap-3">
-                    <UserAvatar
-                        image={contentPost.author.image}
-                        username={contentPost.author.username}
-                        name={contentPost.author.name}
-                        size="medium"
-                    />
-                    <View className="flex-1">
-                        <View className="flex-row gap-2 items-center">
-                            <Text className="text-black dark:text-white font-bold text-lg">{contentPost.author.name || contentPost.author.username}</Text>
-                            <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
-                            <Text className="text-gray-500 text-base">· {new Date(contentPost.createdAt).toLocaleDateString()}</Text>
-                        </View>
-                        {contentPost.content && (
-                            <PostContent content={contentPost.content} />
-                        )}
+            await fetch(`${API_URL}/posts/${postId}/like`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (error) {
+            console.error('Like failed', error);
+        }
+    };
 
-                        {contentPost.image && (
-                            <Image
-                                source={{ uri: getImageUrl(contentPost.image)! }}
-                                className="mt-3 w-full h-64 rounded-xl bg-gray-200 dark:bg-gray-800"
-                                resizeMode="cover"
-                            />
-                        )}
+    const openRepostModal = (post: any) => {
+        setSelectedPost(post);
+        setRepostModalVisible(true);
+    };
 
-                        {contentPost.quote && (
-                            <TouchableOpacity
-                                className="mt-3 border border-gray-200 dark:border-gray-800 rounded-xl p-3 overflow-hidden"
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    router.push(`/post/${contentPost.quote!.id}`);
-                                }}
-                            >
-                                <View className="flex-row items-center gap-2 mb-1">
-                                    <View className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                                        {contentPost.quote.author.image ? (
-                                            <Image source={{ uri: getImageUrl(contentPost.quote.author.image)! }} className="w-full h-full" />
-                                        ) : (
-                                            <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                                <Text className="text-black dark:text-white text-xs font-bold">
-                                                    {(contentPost.quote.author.username?.[0] || '?').toUpperCase()}
-                                                </Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                    <Text className="font-bold text-black dark:text-white text-base">{contentPost.quote.author.name || contentPost.quote.author.username}</Text>
-                                    <Text className="text-gray-500 text-base">@{contentPost.quote.author.username}</Text>
-                                    <Text className="text-gray-500 text-base">· {new Date(contentPost.quote.createdAt).toLocaleDateString()}</Text>
-                                </View>
-                                <Text className="text-black dark:text-white text-base">{contentPost.quote.content}</Text>
-                                {contentPost.quote.image && (
-                                    <Image
-                                        source={{ uri: getImageUrl(contentPost.quote.image)! }}
-                                        className="mt-2 w-full h-40 rounded-lg bg-gray-800"
-                                        resizeMode="cover"
-                                    />
-                                )}
-                            </TouchableOpacity>
-                        )}
+    const confirmRepost = async () => {
+        if (!selectedPost) return;
+        setRepostModalVisible(false);
 
-                        <PostStats
-                            replies={contentPost._count?.replies || 0}
-                            reposts={contentPost._count?.reposts || 0}
-                            quotes={contentPost._count?.quotes || 0}
-                            likes={contentPost._count?.likes || 0}
-                            likedByMe={contentPost.likedByMe}
-                        />
-                    </View>
-                </View>
-            </TouchableOpacity>
-        );
+        const currentReposted = selectedPost.isRepostedByMe || false;
+
+        setPosts(posts.map(p => {
+            if (p.id === selectedPost.id) {
+                return {
+                    ...p,
+                    isRepostedByMe: !currentReposted,
+                    _count: {
+                        ...p._count,
+                        reposts: currentReposted ? p._count.reposts - 1 : p._count.reposts + 1
+                    }
+                };
+            }
+            return p;
+        }));
+
+        try {
+            const token = await getToken();
+            if (!token) return;
+
+            const res = await fetch(`${API_URL}/posts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ repostId: selectedPost.id })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.deleted) console.log('Repost removed');
+            }
+        } catch (error) {
+            console.error('Repost failed', error);
+            setPosts(posts.map(p => {
+                if (p.id === selectedPost.id) {
+                    return {
+                        ...p,
+                        isRepostedByMe: currentReposted,
+                        _count: {
+                            ...p._count,
+                            reposts: currentReposted ? p._count.reposts + 1 : p._count.reposts - 1
+                        }
+                    };
+                }
+                return p;
+            }));
+        }
+    };
+
+    const handleQuote = () => {
+        if (!selectedPost) return;
+        setRepostModalVisible(false);
+        router.push(`/compose?quote=${selectedPost.id}`);
     };
 
     return (
@@ -307,8 +312,47 @@ export default function ProfileScreen() {
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={renderHeader()}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorScheme === 'dark' ? 'white' : 'black'} />}
-                renderItem={renderItem}
+                renderItem={({ item }) => (
+                    <PostCard
+                        post={item}
+                        originalAuthor={item.repost ? item.author : undefined}
+                        onPress={() => router.push(`/post/${item.id}`)}
+                        onAuthorPress={(username) => router.push(`/u/${username}`)}
+                        onReply={() => router.push(`/compose?replyTo=${item.id}`)}
+                        onRepost={() => openRepostModal(item)}
+                        onLike={() => handleLike(item.id, item.isLikedByMe)}
+                    />
+                )}
             />
+
+            {/* Repost Modal */}
+            <Modal
+                visible={repostModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setRepostModalVisible(false)}
+            >
+                <TouchableOpacity
+                    className="flex-1 bg-black/50 justify-center items-center"
+                    activeOpacity={1}
+                    onPress={() => setRepostModalVisible(false)}
+                >
+                    <View className="bg-white dark:bg-black rounded-2xl w-80 overflow-hidden">
+                        <TouchableOpacity
+                            className="p-4 border-b border-gray-200 dark:border-gray-800"
+                            onPress={confirmRepost}
+                        >
+                            <Text className="text-black dark:text-white text-lg font-semibold">Repost</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className="p-4"
+                            onPress={handleQuote}
+                        >
+                            <Text className="text-black dark:text-white text-lg font-semibold">Quote</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 }

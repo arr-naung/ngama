@@ -34,6 +34,31 @@ export default function PostDetailsScreen() {
         if (!selectedPost) return;
         setRepostModalVisible(false);
 
+        const currentReposted = selectedPost.isRepostedByMe || false;
+
+        // Optimistic update
+        const updatePost = (p: any) => {
+            if (p.id === selectedPost.id) {
+                return {
+                    ...p,
+                    isRepostedByMe: !currentReposted,
+                    _count: {
+                        ...p._count,
+                        reposts: currentReposted ? p._count.reposts - 1 : p._count.reposts + 1
+                    }
+                };
+            }
+            if (p.replies) {
+                return { ...p, replies: p.replies.map(updatePost) };
+            }
+            if (p.ancestors) {
+                return { ...p, ancestors: p.ancestors.map(updatePost) };
+            }
+            return p;
+        };
+
+        setPost((prev: any) => updatePost(prev));
+
         try {
             const token = await getToken();
             if (!token) return;
@@ -48,10 +73,17 @@ export default function PostDetailsScreen() {
             });
 
             if (res.ok) {
-                fetchPost();
+                const data = await res.json();
+                if (data.deleted) {
+                    console.log('Repost removed successfully');
+                } else {
+                    console.log('Repost created successfully');
+                }
             }
         } catch (error) {
             console.error('Repost failed', error);
+            // Revert on error
+            setPost((prev: any) => updatePost(prev));
         }
     };
 
@@ -62,13 +94,13 @@ export default function PostDetailsScreen() {
     };
 
     const handleLike = async (item: any) => {
-        const isLiked = item.likedByMe;
+        const isLiked = item.isLikedByMe;
         const newLikeCount = isLiked ? item._count.likes - 1 : item._count.likes + 1;
 
         // Optimistic update
         const updatePost = (p: any) => {
             if (p.id === item.id) {
-                return { ...p, likedByMe: !isLiked, _count: { ...p._count, likes: newLikeCount } };
+                return { ...p, isLikedByMe: !isLiked, _count: { ...p._count, likes: newLikeCount } };
             }
             if (p.replies) {
                 return { ...p, replies: p.replies.map(updatePost) };
@@ -287,13 +319,13 @@ export default function PostDetailsScreen() {
                             onPress={() => openRepostModal(contentPost)}
                             className="p-2"
                         >
-                            <Ionicons name="git-compare-outline" size={24} color="gray" />
+                            <Ionicons name="git-compare-outline" size={24} color={(contentPost.isRepostedByMe || contentPost.isQuotedByMe) ? "#00BA7C" : "gray"} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             className="p-2"
                             onPress={() => handleLike(contentPost)}
                         >
-                            <Ionicons name={contentPost.likedByMe ? "heart" : "heart-outline"} size={24} color={contentPost.likedByMe ? "red" : "gray"} />
+                            <Ionicons name={contentPost.isLikedByMe ? "heart" : "heart-outline"} size={24} color={contentPost.isLikedByMe ? "red" : "gray"} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             className="p-2"

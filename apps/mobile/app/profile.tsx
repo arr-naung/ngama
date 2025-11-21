@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
+import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList, RefreshControl, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { API_URL, getImageUrl } from '../constants';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { UserAvatar } from '../components/ui/user-avatar';
 import { PostStats } from '../components/ui/post-stats';
 import { PostContent } from '../components/post-content';
+import { PostCard } from '../components/ui/post-card';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -17,6 +18,8 @@ export default function ProfileScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'likes'>('posts');
     const { colorScheme } = useColorScheme();
+    const [repostModalVisible, setRepostModalVisible] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<any>(null);
 
     const fetchProfile = async () => {
         try {
@@ -108,6 +111,107 @@ export default function ProfileScreen() {
     const handleLogout = async () => {
         await removeToken();
         router.replace('/auth/signin');
+    };
+
+    const handleLike = async (postId: string, currentLiked: boolean) => {
+        // Optimistic update
+        setPosts(posts.map(p => {
+            if (p.id === postId) {
+                return {
+                    ...p,
+                    isLikedByMe: !currentLiked,
+                    _count: {
+                        ...p._count,
+                        likes: currentLiked ? p._count.likes - 1 : p._count.likes + 1
+                    }
+                };
+            }
+            return p;
+        }));
+
+        try {
+            const token = await getToken();
+            if (!token) return;
+
+            await fetch(`${API_URL}/posts/${postId}/like`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (error) {
+            console.error('Like failed', error);
+        }
+    };
+
+    const openRepostModal = (post: any) => {
+        setSelectedPost(post);
+        setRepostModalVisible(true);
+    };
+
+    const confirmRepost = async () => {
+        if (!selectedPost) return;
+        setRepostModalVisible(false);
+
+        const currentReposted = selectedPost.isRepostedByMe || false;
+
+        // Optimistic update
+        setPosts(posts.map(p => {
+            if (p.id === selectedPost.id) {
+                return {
+                    ...p,
+                    isRepostedByMe: !currentReposted,
+                    _count: {
+                        ...p._count,
+                        reposts: currentReposted ? p._count.reposts - 1 : p._count.reposts + 1
+                    }
+                };
+            }
+            return p;
+        }));
+
+        try {
+            const token = await getToken();
+            if (!token) return;
+
+            const res = await fetch(`${API_URL}/posts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ repostId: selectedPost.id })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.deleted) {
+                    console.log('Repost removed');
+                } else {
+                    console.log('Repost created');
+                }
+            }
+        } catch (error) {
+            console.error('Repost failed', error);
+            // Revert on error
+            setPosts(posts.map(p => {
+                if (p.id === selectedPost.id) {
+                    return {
+                        ...p,
+                        isRepostedByMe: currentReposted,
+                        _count: {
+                            ...p._count,
+                            reposts: currentReposted ? p._count.reposts + 1 : p._count.reposts - 1
+                        }
+                    };
+                }
+                return p;
+            }));
+        }
+    };
+
+    const handleQuote = () => {
+        if (!selectedPost) return;
+        setRepostModalVisible(false);
+        router.push(`/compose?quote=${selectedPost.id}`);
     };
 
     if (loading && !user) {
@@ -217,42 +321,46 @@ export default function ProfileScreen() {
                 ListHeaderComponent={renderHeader()}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorScheme === 'dark' ? 'white' : 'black'} />}
                 renderItem={({ item }) => (
-                    <View className="border-b border-gray-200 dark:border-gray-800 p-2">
-                        <View className="flex-row gap-3">
-                            <UserAvatar
-                                image={item.author.image}
-                                username={item.author.username}
-                                name={item.author.name}
-                                size="medium"
-                            />
-                            <View className="flex-1">
-                                <View className="flex-row gap-2 items-center">
-                                    <Text className="text-black dark:text-white font-bold text-lg">{item.author.name || item.author.username}</Text>
-                                    <Text className="text-gray-500 text-base">@{item.author.username}</Text>
-                                    <Text className="text-gray-500 text-base">· {new Date(item.createdAt).toLocaleDateString()}</Text>
-                                </View>
-                                {item.content && (
-                                    <PostContent content={item.content} />
-                                )}
-                                {item.image && (
-                                    <Image
-                                        source={{ uri: getImageUrl(item.image)! }}
-                                        className="mt-3 w-full h-64 rounded-xl bg-gray-200 dark:bg-gray-800"
-                                        resizeMode="cover"
-                                    />
-                                )}
-                                <PostStats
-                                    replies={item._count?.replies || 0}
-                                    reposts={item._count?.reposts || 0}
-                                    quotes={item._count?.quotes || 0}
-                                    likes={item._count?.likes || 0}
-                                    likedByMe={item.likedByMe}
-                                />
-                            </View>
-                        </View>
-                    </View>
+                    <PostCard
+                        post={item}
+                        originalAuthor={item.repost ? item.author : undefined}
+                        onPress={() => router.push(`/post/${item.id}`)}
+                        onAuthorPress={(username) => router.push(`/u/${username}`)}
+                        onReply={() => router.push(`/compose?replyTo=${item.id}`)}
+                        onRepost={() => openRepostModal(item)}
+                        onLike={() => handleLike(item.id, item.isLikedByMe)}
+                    />
                 )}
             />
+
+            {/* Repost Modal */}
+            <Modal
+                visible={repostModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setRepostModalVisible(false)}
+            >
+                <TouchableOpacity
+                    className="flex-1 bg-black/50 justify-center items-center"
+                    activeOpacity={1}
+                    onPress={() => setRepostModalVisible(false)}
+                >
+                    <View className="bg-white dark:bg-black rounded-2xl w-80 overflow-hidden">
+                        <TouchableOpacity
+                            className="p-4 border-b border-gray-200 dark:border-gray-800"
+                            onPress={confirmRepost}
+                        >
+                            <Text className="text-black dark:text-white text-lg font-semibold">Repost</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className="p-4"
+                            onPress={handleQuote}
+                        >
+                            <Text className="text-black dark:text-white text-lg font-semibold">Quote</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 }

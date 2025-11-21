@@ -23,9 +23,9 @@ interface PostCardProps {
             reposts: number;
             quotes: number;
         };
-        likedByMe: boolean;
-        repostedByMe?: boolean;
-        quotedByMe?: boolean;
+        isLikedByMe: boolean;
+        isRepostedByMe?: boolean;
+        isQuotedByMe?: boolean;
         repost?: any;
         quote?: {
             id: string;
@@ -131,8 +131,9 @@ export function PostCard({
                         reposts={contentPost._count.reposts}
                         quotes={contentPost._count.quotes}
                         likes={contentPost._count.likes}
-                        likedByMe={contentPost.likedByMe}
-                        repostedByMe={contentPost.repostedByMe}
+                        likedByMe={contentPost.isLikedByMe}
+                        repostedByMe={contentPost.isRepostedByMe}
+                        quotedByMe={contentPost.isQuotedByMe}
                         onReply={onReply}
                         onRepost={onRepost}
                         onLike={onLike}

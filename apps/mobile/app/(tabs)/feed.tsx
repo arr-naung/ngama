@@ -25,7 +25,9 @@ interface Post {
         reposts: number;
         quotes: number;
     };
-    likedByMe: boolean;
+    isLikedByMe: boolean;
+    isRepostedByMe?: boolean;
+    isQuotedByMe?: boolean;
     repost?: Post;
     quote?: Post;
     image?: string | null;
@@ -113,7 +115,7 @@ export default function Feed() {
             if (p.id === postId) {
                 return {
                     ...p,
-                    likedByMe: !currentLiked,
+                    isLikedByMe: !currentLiked,
                     _count: {
                         ...p._count,
                         likes: currentLiked ? p._count.likes - 1 : p._count.likes + 1
@@ -149,8 +151,24 @@ export default function Feed() {
         if (!selectedPost) return;
         setRepostModalVisible(false);
 
-        // Optimistic update (optional, but good for UX)
-        // For now, we'll just call the API and refresh or let the user see it later
+        const currentReposted = selectedPost.isRepostedByMe || false;
+
+        // Optimistic update
+        setPosts(posts.map(p => {
+            const targetPost = p.repost ? p.repost : p;
+            if (targetPost.id === selectedPost.id) {
+                const updated = {
+                    ...targetPost,
+                    isRepostedByMe: !currentReposted,
+                    _count: {
+                        ...targetPost._count,
+                        reposts: currentReposted ? targetPost._count.reposts - 1 : targetPost._count.reposts + 1
+                    }
+                };
+                return p.repost ? { ...p, repost: updated } : updated;
+            }
+            return p;
+        }));
 
         try {
             const token = await getToken();
@@ -166,11 +184,48 @@ export default function Feed() {
             });
 
             if (res.ok) {
-                // Refresh feed to show the repost
-                fetchPosts();
+                const data = await res.json();
+                if (data.deleted) {
+                    console.log('Repost removed');
+                } else {
+                    console.log('Repost created');
+                }
+            } else {
+                // Revert on error
+                setPosts(posts.map(p => {
+                    const targetPost = p.repost ? p.repost : p;
+                    if (targetPost.id === selectedPost.id) {
+                        const reverted = {
+                            ...targetPost,
+                            isRepostedByMe: currentReposted,
+                            _count: {
+                                ...targetPost._count,
+                                reposts: currentReposted ? targetPost._count.reposts + 1 : targetPost._count.reposts - 1
+                            }
+                        };
+                        return p.repost ? { ...p, repost: reverted } : reverted;
+                    }
+                    return p;
+                }));
             }
         } catch (error) {
             console.error('Repost failed', error);
+            // Revert on error
+            setPosts(posts.map(p => {
+                const targetPost = p.repost ? p.repost : p;
+                if (targetPost.id === selectedPost.id) {
+                    const reverted = {
+                        ...targetPost,
+                        isRepostedByMe: currentReposted,
+                        _count: {
+                            ...targetPost._count,
+                            reposts: currentReposted ? targetPost._count.reposts + 1 : targetPost._count.reposts - 1
+                        }
+                    };
+                    return p.repost ? { ...p, repost: reverted } : reverted;
+                }
+                return p;
+            }));
         }
     };
 
@@ -188,7 +243,7 @@ export default function Feed() {
             onAuthorPress={(username) => router.push(`/u/${username}`)}
             onReply={() => handleReply(item.repost ? item.repost : item)}
             onRepost={() => openRepostModal(item.repost ? item.repost : item)}
-            onLike={() => handleLike((item.repost ? item.repost : item).id, (item.repost ? item.repost : item).likedByMe)}
+            onLike={() => handleLike((item.repost ? item.repost : item).id, (item.repost ? item.repost : item).isLikedByMe)}
             onQuotePress={(quoteId) => router.push(`/post/${quoteId}`)}
         />
     );
