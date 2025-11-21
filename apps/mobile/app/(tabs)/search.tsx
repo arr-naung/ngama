@@ -4,6 +4,7 @@ import { useRouter, Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { API_URL, getImageUrl } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
+import { UserAvatar } from '../../components/ui/user-avatar';
 
 export default function SearchScreen() {
     const router = useRouter();
@@ -53,17 +54,12 @@ export default function SearchScreen() {
                     onPress={() => router.push(`/u/${item.username}`)}
                     className="flex-row gap-3 p-4 border-b border-gray-200 dark:border-gray-800 items-center"
                 >
-                    <View className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                        {item.image ? (
-                            <Image source={{ uri: getImageUrl(item.image)! }} className="w-full h-full" />
-                        ) : (
-                            <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                <Text className="text-black dark:text-white text-lg font-bold">
-                                    {(item.username?.[0] || '?').toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                    <UserAvatar
+                        image={item.image}
+                        username={item.username}
+                        name={item.name}
+                        size="medium"
+                    />
                     <View>
                         <Text className="text-black dark:text-white font-bold text-base">{item.name || item.username}</Text>
                         <Text className="text-gray-500 text-sm">@{item.username}</Text>
@@ -78,17 +74,12 @@ export default function SearchScreen() {
                     className="p-4 border-b border-gray-200 dark:border-gray-800"
                 >
                     <View className="flex-row gap-3">
-                        <View className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                            {item.author.image ? (
-                                <Image source={{ uri: getImageUrl(item.author.image)! }} className="w-full h-full" />
-                            ) : (
-                                <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                    <Text className="text-black dark:text-white text-sm font-bold">
-                                        {(item.author.username?.[0] || '?').toUpperCase()}
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
+                        <UserAvatar
+                            image={item.author.image}
+                            username={item.author.username}
+                            name={item.author.name}
+                            size="medium"
+                        />
                         <View className="flex-1">
                             <View className="flex-row gap-2 items-center">
                                 <Text className="text-black dark:text-white font-bold text-base">{item.author.name || item.author.username}</Text>

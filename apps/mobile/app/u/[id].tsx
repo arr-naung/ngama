@@ -4,6 +4,9 @@ import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { API_URL, getImageUrl } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
+import { UserAvatar } from '../../components/ui/user-avatar';
+import { PostStats } from '../../components/ui/post-stats';
+import { PostContent } from '../../components/post-content';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -211,7 +214,7 @@ export default function ProfileScreen() {
 
         return (
             <TouchableOpacity
-                className="border-b border-gray-200 dark:border-gray-800 p-4"
+                className="border-b border-gray-200 dark:border-gray-800 p-2"
                 onPress={() => router.push(`/post/${contentPost.id}`)}
             >
                 {isRepost && (
@@ -224,24 +227,21 @@ export default function ProfileScreen() {
                 )}
 
                 <View className="flex-row gap-3">
-                    <View className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                        {contentPost.author.image ? (
-                            <Image source={{ uri: getImageUrl(contentPost.author.image)! }} className="w-full h-full" />
-                        ) : (
-                            <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                <Text className="text-black dark:text-white font-bold">
-                                    {(contentPost.author.username?.[0] || '?').toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                    <UserAvatar
+                        image={contentPost.author.image}
+                        username={contentPost.author.username}
+                        name={contentPost.author.name}
+                        size="medium"
+                    />
                     <View className="flex-1">
                         <View className="flex-row gap-2 items-center">
                             <Text className="text-black dark:text-white font-bold text-lg">{contentPost.author.name || contentPost.author.username}</Text>
                             <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
                             <Text className="text-gray-500 text-base">· {new Date(contentPost.createdAt).toLocaleDateString()}</Text>
                         </View>
-                        <Text className="text-black dark:text-white mt-1 text-lg leading-6">{contentPost.content}</Text>
+                        {contentPost.content && (
+                            <PostContent content={contentPost.content} />
+                        )}
 
                         {contentPost.image && (
                             <Image
@@ -286,24 +286,13 @@ export default function ProfileScreen() {
                             </TouchableOpacity>
                         )}
 
-                        <View className="flex-row mt-3 gap-6 justify-between pr-8">
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name="chatbubble-outline" size={18} color="gray" />
-                                <Text className="text-gray-500 text-base">{contentPost._count?.replies || 0}</Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name="git-compare-outline" size={18} color="gray" />
-                                <Text className="text-gray-500 text-base">{(contentPost._count?.reposts || 0) + (contentPost._count?.quotes || 0)}</Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name={contentPost.likedByMe ? "heart" : "heart-outline"} size={18} color={contentPost.likedByMe ? "red" : "gray"} />
-                                <Text className={`text-base ${contentPost.likedByMe ? 'text-red-500' : 'text-gray-500'}`}>{contentPost._count?.likes || 0}</Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name="stats-chart-outline" size={18} color="gray" />
-                                <Text className="text-gray-500 text-base">0</Text>
-                            </View>
-                        </View>
+                        <PostStats
+                            replies={contentPost._count?.replies || 0}
+                            reposts={contentPost._count?.reposts || 0}
+                            quotes={contentPost._count?.quotes || 0}
+                            likes={contentPost._count?.likes || 0}
+                            likedByMe={contentPost.likedByMe}
+                        />
                     </View>
                 </View>
             </TouchableOpacity>

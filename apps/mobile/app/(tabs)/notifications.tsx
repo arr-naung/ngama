@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
+import { UserAvatar } from '../../components/ui/user-avatar';
 
 interface Notification {
     id: string;
-    type: 'LIKE' | 'FOLLOW' | 'REPLY';
+    type: 'LIKE' | 'FOLLOW' | 'REPLY' | 'REPOST' | 'QUOTE';
     createdAt: string;
     read: boolean;
     actor: {
@@ -63,7 +65,7 @@ export default function NotificationsScreen() {
     }
 
     return (
-        <View className="flex-1 bg-white dark:bg-black">
+        <SafeAreaView className="flex-1 bg-white dark:bg-black">
             <Stack.Screen options={{
                 title: 'Notifications',
                 headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
@@ -93,24 +95,25 @@ export default function NotificationsScreen() {
                             {item.type === 'LIKE' && <Ionicons name="heart" size={24} color="#F91880" />}
                             {item.type === 'FOLLOW' && <Ionicons name="person" size={24} color="#1D9BF0" />}
                             {item.type === 'REPLY' && <Ionicons name="chatbubble" size={24} color="#1D9BF0" />}
+                            {item.type === 'REPOST' && <Ionicons name="repeat" size={24} color="#00BA7C" />}
+                            {item.type === 'QUOTE' && <Ionicons name="chatbox" size={24} color="#1D9BF0" />}
                         </View>
                         <View className="flex-1">
                             <View className="flex-row items-center gap-2 mb-1">
-                                <View className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                                    {item.actor.image ? (
-                                        <Image source={{ uri: getImageUrl(item.actor.image)! }} className="w-full h-full" />
-                                    ) : (
-                                        <View className="w-full h-full justify-center items-center bg-gray-300 dark:bg-gray-700">
-                                            <Text className="text-black dark:text-white text-xs font-bold">{item.actor.username[0].toUpperCase()}</Text>
-                                        </View>
-                                    )}
-                                </View>
+                                <UserAvatar
+                                    image={item.actor.image}
+                                    username={item.actor.username}
+                                    name={item.actor.name}
+                                    size="small"
+                                />
                                 <Text className="text-black dark:text-white font-bold text-base">{item.actor.username}</Text>
                             </View>
                             <Text className="text-gray-400 text-base">
                                 {item.type === 'LIKE' && 'liked your post'}
                                 {item.type === 'FOLLOW' && 'followed you'}
                                 {item.type === 'REPLY' && 'replied to your post'}
+                                {item.type === 'REPOST' && 'reposted your post'}
+                                {item.type === 'QUOTE' && 'quoted your post'}
                             </Text>
                             {item.post && (
                                 <Text className="text-gray-500 text-sm mt-1" numberOfLines={2}>
@@ -121,6 +124,6 @@ export default function NotificationsScreen() {
                     </TouchableOpacity>
                 )}
             />
-        </View>
+        </SafeAreaView>
     );
 }

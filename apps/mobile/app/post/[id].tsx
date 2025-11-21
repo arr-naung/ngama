@@ -193,7 +193,7 @@ export default function PostDetailsScreen() {
 
         if (isMain) {
             return (
-                <View className="border-b border-gray-200 dark:border-gray-800 p-4">
+                <View className="border-b border-gray-200 dark:border-gray-800 p-2">
                     {isRepost && (
                         <View className="flex-row items-center gap-2 mb-2">
                             <Ionicons name="repeat" size={16} color="#71767B" />
@@ -309,7 +309,7 @@ export default function PostDetailsScreen() {
         // List Item Layout (Feed Style)
         return (
             <TouchableOpacity
-                className="border-b border-gray-200 dark:border-gray-800 p-4"
+                className="border-b border-gray-200 dark:border-gray-800 p-2"
                 onPress={() => router.push(`/post/${contentPost.id}`)}
             >
                 {isRepost && (

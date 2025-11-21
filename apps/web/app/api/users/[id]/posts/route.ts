@@ -70,11 +70,19 @@ export async function GET(
                         }
                     },
                     _count: {
-                        select: { likes: true, replies: true }
+                        select: { likes: true, replies: true, reposts: true, quotes: true }
                     },
                     likes: currentUserId ? {
                         where: { userId: currentUserId },
                         select: { userId: true }
+                    } : false,
+                    reposts: currentUserId ? {
+                        where: { authorId: currentUserId },
+                        select: { authorId: true }
+                    } : false,
+                    quotes: currentUserId ? {
+                        where: { authorId: currentUserId },
+                        select: { authorId: true }
                     } : false
                 },
                 orderBy: {
@@ -94,11 +102,19 @@ export async function GET(
                         }
                     },
                     _count: {
-                        select: { likes: true, replies: true }
+                        select: { likes: true, replies: true, reposts: true, quotes: true }
                     },
                     likes: currentUserId ? {
                         where: { userId: currentUserId },
                         select: { userId: true }
+                    } : false,
+                    reposts: currentUserId ? {
+                        where: { authorId: currentUserId },
+                        select: { authorId: true }
+                    } : false,
+                    quotes: currentUserId ? {
+                        where: { authorId: currentUserId },
+                        select: { authorId: true }
                     } : false,
                     repost: {
                         include: {
@@ -116,6 +132,10 @@ export async function GET(
                             likes: currentUserId ? {
                                 where: { userId: currentUserId },
                                 select: { userId: true }
+                            } : false,
+                            reposts: currentUserId ? {
+                                where: { authorId: currentUserId },
+                                select: { authorId: true }
                             } : false
                         }
                     },
@@ -135,6 +155,10 @@ export async function GET(
                             likes: currentUserId ? {
                                 where: { userId: currentUserId },
                                 select: { userId: true }
+                            } : false,
+                            reposts: currentUserId ? {
+                                where: { authorId: currentUserId },
+                                select: { authorId: true }
                             } : false
                         }
                     }
@@ -145,11 +169,22 @@ export async function GET(
             });
         }
 
-        const postsWithLikeStatus = posts.map(post => ({
+        // Helper to format a single post with like/repost status
+        const formatPost = (post: any): any => ({
             ...post,
             likedByMe: post.likes ? post.likes.length > 0 : false,
-            likes: undefined
-        }));
+            isLikedByMe: post.likes ? post.likes.length > 0 : false,
+            isRepostedByMe: post.reposts ? post.reposts.length > 0 : false,
+            isQuotedByMe: post.quotes ? post.quotes.length > 0 : false,
+            likes: undefined,
+            reposts: post._count?.reposts,
+            quotes: undefined,
+            // Recursively format nested repost and quote
+            repost: post.repost ? formatPost(post.repost) : undefined,
+            quote: post.quote ? formatPost(post.quote) : undefined
+        });
+
+        const postsWithLikeStatus = posts.map(formatPost);
 
         return NextResponse.json(postsWithLikeStatus);
 

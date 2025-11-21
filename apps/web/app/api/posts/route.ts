@@ -53,6 +53,14 @@ export async function GET(request: Request) {
                     where: { userId: currentUserId },
                     select: { userId: true }
                 } : false,
+                reposts: currentUserId ? {
+                    where: { authorId: currentUserId },
+                    select: { authorId: true }
+                } : false,
+                quotes: currentUserId ? {
+                    where: { authorId: currentUserId },
+                    select: { authorId: true }
+                } : false,
                 repost: {
                     include: {
                         author: {
@@ -69,6 +77,14 @@ export async function GET(request: Request) {
                         likes: currentUserId ? {
                             where: { userId: currentUserId },
                             select: { userId: true }
+                        } : false,
+                        reposts: currentUserId ? {
+                            where: { authorId: currentUserId },
+                            select: { authorId: true }
+                        } : false,
+                        quotes: currentUserId ? {
+                            where: { authorId: currentUserId },
+                            select: { authorId: true }
                         } : false
                     }
                 },
@@ -88,6 +104,14 @@ export async function GET(request: Request) {
                         likes: currentUserId ? {
                             where: { userId: currentUserId },
                             select: { userId: true }
+                        } : false,
+                        reposts: currentUserId ? {
+                            where: { authorId: currentUserId },
+                            select: { authorId: true }
+                        } : false,
+                        quotes: currentUserId ? {
+                            where: { authorId: currentUserId },
+                            select: { authorId: true }
                         } : false
                     }
                 }
@@ -108,7 +132,11 @@ export async function GET(request: Request) {
                 const result: any = {
                     ...p,
                     isLikedByMe: p.likes && Array.isArray(p.likes) ? p.likes.length > 0 : false,
-                    likes: undefined
+                    isRepostedByMe: p.reposts && Array.isArray(p.reposts) ? p.reposts.length > 0 : false,
+                    isQuotedByMe: p.quotes && Array.isArray(p.quotes) ? p.quotes.length > 0 : false,
+                    likes: undefined,
+                    reposts: p._count?.reposts,
+                    quotes: undefined
                 };
                 return result;
             };
@@ -176,6 +204,28 @@ export async function POST(request: Request) {
 
         if (!validation.success) {
             return NextResponse.json({ error: validation.error.errors }, { status: 400 });
+        }
+
+        // Check if this is a repost toggle (undo)
+        if (validation.data.repostId && !validation.data.content && !validation.data.quoteId) {
+            const existingRepost = await prisma.post.findFirst({
+                where: {
+                    authorId: payload.userId as string,
+                    repostId: validation.data.repostId
+                }
+            });
+
+            if (existingRepost) {
+                // User is trying to undo their repost - delete it
+                await prisma.post.delete({
+                    where: { id: existingRepost.id }
+                });
+
+                return NextResponse.json({
+                    deleted: true,
+                    message: 'Repost removed'
+                });
+            }
         }
 
         const post = await prisma.$transaction(async (tx) => {

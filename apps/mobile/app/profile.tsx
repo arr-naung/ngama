@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import { API_URL, getImageUrl } from '../../constants';
-import { getToken, removeToken } from '../../lib/auth';
+import { API_URL, getImageUrl } from '../constants';
+import { getToken, removeToken } from '../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
+import { UserAvatar } from '../components/ui/user-avatar';
+import { PostStats } from '../components/ui/post-stats';
+import { PostContent } from '../components/post-content';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -214,26 +217,23 @@ export default function ProfileScreen() {
                 ListHeaderComponent={renderHeader()}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorScheme === 'dark' ? 'white' : 'black'} />}
                 renderItem={({ item }) => (
-                    <View className="border-b border-gray-200 dark:border-gray-800 p-4">
+                    <View className="border-b border-gray-200 dark:border-gray-800 p-2">
                         <View className="flex-row gap-3">
-                            <View className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                                {item.author.image ? (
-                                    <Image source={{ uri: getImageUrl(item.author.image)! }} className="w-full h-full" />
-                                ) : (
-                                    <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                        <Text className="text-black dark:text-white font-bold">
-                                            {(item.author.username?.[0] || '?').toUpperCase()}
-                                        </Text>
-                                    </View>
-                                )}
-                            </View>
+                            <UserAvatar
+                                image={item.author.image}
+                                username={item.author.username}
+                                name={item.author.name}
+                                size="medium"
+                            />
                             <View className="flex-1">
                                 <View className="flex-row gap-2 items-center">
                                     <Text className="text-black dark:text-white font-bold text-lg">{item.author.name || item.author.username}</Text>
                                     <Text className="text-gray-500 text-base">@{item.author.username}</Text>
                                     <Text className="text-gray-500 text-base">· {new Date(item.createdAt).toLocaleDateString()}</Text>
                                 </View>
-                                <Text className="text-black dark:text-white mt-1 text-lg leading-6">{item.content}</Text>
+                                {item.content && (
+                                    <PostContent content={item.content} />
+                                )}
                                 {item.image && (
                                     <Image
                                         source={{ uri: getImageUrl(item.image)! }}
@@ -241,24 +241,13 @@ export default function ProfileScreen() {
                                         resizeMode="cover"
                                     />
                                 )}
-                                <View className="flex-row mt-3 gap-6 justify-between pr-8">
-                                    <View className="flex-row items-center gap-1">
-                                        <Ionicons name="chatbubble-outline" size={18} color="gray" />
-                                        <Text className="text-gray-500 text-base">{item._count?.replies || 0}</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-1">
-                                        <Ionicons name="git-compare-outline" size={18} color="gray" />
-                                        <Text className="text-gray-500 text-base">{(item._count?.reposts || 0) + (item._count?.quotes || 0)}</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-1">
-                                        <Ionicons name={item.likedByMe ? "heart" : "heart-outline"} size={18} color={item.likedByMe ? "red" : "gray"} />
-                                        <Text className={`text-base ${item.likedByMe ? 'text-red-500' : 'text-gray-500'}`}>{item._count?.likes || 0}</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-1">
-                                        <Ionicons name="stats-chart-outline" size={18} color="gray" />
-                                        <Text className="text-gray-500 text-base">0</Text>
-                                    </View>
-                                </View>
+                                <PostStats
+                                    replies={item._count?.replies || 0}
+                                    reposts={item._count?.reposts || 0}
+                                    quotes={item._count?.quotes || 0}
+                                    likes={item._count?.likes || 0}
+                                    likedByMe={item.likedByMe}
+                                />
                             </View>
                         </View>
                     </View>

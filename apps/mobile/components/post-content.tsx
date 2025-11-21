@@ -14,7 +14,7 @@ export function PostContent({ content }: { content: string }) {
 
     return (
         <View>
-            <Text className="mt-1 text-black dark:text-white text-lg leading-6">
+            <Text className="mt-1 text-black dark:text-white text-base leading-6">
                 {displayContent}
                 {shouldTruncate && (
                     <Text
@@ -46,7 +46,7 @@ export function QuotedPostContent({ content }: { content: string }) {
     const displayContent = expanded || !shouldTruncate ? content : content.slice(0, MAX_LENGTH) + '...';
 
     return (
-        <Text className="text-black dark:text-white text-sm">
+        <Text className="text-black dark:text-white text-base leading-5">
             {displayContent}
             {shouldTruncate && (
                 <Text

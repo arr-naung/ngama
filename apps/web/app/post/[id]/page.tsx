@@ -6,31 +6,9 @@ import Link from 'next/link';
 import PostInput from '@/components/post-input';
 import ReplyModal from '@/components/reply-modal';
 import QuoteModal from '@/components/quote-modal';
+import { PostCard, Post } from '@/components/post-card';
 import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon } from '@/components/icons';
 import { QuotedPostContent } from '@/components/post-content';
-
-interface Post {
-    id: string;
-    content: string | null;
-    author: {
-        username: string;
-        name: string | null;
-        image: string | null;
-    };
-    createdAt: string;
-    _count: {
-        likes: number;
-        replies: number;
-        reposts: number;
-        quotes: number;
-    };
-    isLikedByMe: boolean;
-    ancestors?: Post[];
-    replies: Post[];
-    repost?: Post;
-    quote?: Post;
-    image?: string | null;
-}
 
 export default function PostPage() {
     const params = useParams();
@@ -63,6 +41,13 @@ export default function PostPage() {
                 throw new Error('Failed to fetch post');
             }
             const data = await res.json();
+            console.log('[PostDetail] Received post data:', {
+                id: data.id,
+                isLikedByMe: data.isLikedByMe,
+                isRepostedByMe: data.isRepostedByMe,
+                likes: data._count?.likes,
+                reposts: data._count?.reposts
+            });
             setPost(data);
         } catch (err: any) {
             setError(err.message);
@@ -84,7 +69,7 @@ export default function PostPage() {
         // Helper to toggle like in a post object
         const toggleLike = (p: Post) => ({
             ...p,
-            likedByMe: !currentLiked,
+            isLikedByMe: !currentLiked,
             _count: {
                 ...p._count,
                 likes: currentLiked ? p._count.likes - 1 : p._count.likes + 1
@@ -265,7 +250,7 @@ export default function PostPage() {
 
                     <div className="relative">
                         <button
-                            className="group flex items-center gap-2 hover:text-green-500 transition-colors"
+                            className={`group flex items-center gap-2 transition-colors ${contentPost.isRepostedByMe ? 'text-green-500' : 'hover:text-green-500'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 e.nativeEvent.stopImmediatePropagation();
@@ -506,7 +491,7 @@ export default function PostPage() {
 
                                 <div className="relative">
                                     <button
-                                        className="group flex items-center gap-2 hover:text-green-500 transition-colors"
+                                        className={`group flex items-center gap-2 transition-colors ${reply.isRepostedByMe ? 'text-green-500' : 'hover:text-green-500'}`}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             e.nativeEvent.stopImmediatePropagation();

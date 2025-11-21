@@ -1,21 +1,25 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
+import { useColorScheme } from 'nativewind';
 
 export default function TabLayout() {
+    const { colorScheme } = useColorScheme();
+    const isDark = colorScheme === 'dark';
+
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: 'black',
-                    borderTopColor: '#333',
-                    height: 60,
-                    paddingBottom: 8,
-                    paddingTop: 8,
+                    backgroundColor: isDark ? 'black' : 'white',
+                    borderTopColor: isDark ? '#333' : '#e5e7eb',
+                    height: 50,
+                    paddingBottom: 6,
+                    paddingTop: 6,
                 },
-                tabBarActiveTintColor: 'white',
-                tabBarInactiveTintColor: '#666',
+                tabBarActiveTintColor: isDark ? 'white' : 'black',
+                tabBarInactiveTintColor: isDark ? '#666' : '#9ca3af',
                 tabBarShowLabel: false,
             }}
         >
@@ -44,10 +48,10 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="profile"
+                name="messages"
                 options={{
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? 'person' : 'person-outline'} size={28} color={color} />
+                        <Ionicons name={focused ? 'mail' : 'mail-outline'} size={24} color={color} />
                     ),
                 }}
             />

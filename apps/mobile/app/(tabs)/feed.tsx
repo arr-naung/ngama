@@ -8,6 +8,7 @@ import { getToken } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../../components/sidebar';
 import { PostContent, QuotedPostContent } from '../../components/post-content';
+import { PostCard } from '../../components/ui/post-card';
 
 interface Post {
     id: string;
@@ -179,132 +180,22 @@ export default function Feed() {
         router.push(`/compose?quote=${selectedPost.id}`);
     };
 
-    const renderItem = ({ item }: { item: Post }) => {
-        const isRepost = !!item.repost;
-        const contentPost = item.repost ? item.repost : item;
-
-        return (
-            <TouchableOpacity
-                className="border-b border-gray-200 dark:border-gray-800 p-4"
-                onPress={() => router.push(`/post/${contentPost.id}`)}
-            >
-                {isRepost && (
-                    <View className="flex-row items-center gap-2 mb-2 ml-8">
-                        <Ionicons name="repeat" size={16} color="#9CA3AF" />
-                        <Text className="text-gray-400 text-base font-bold">
-                            {item.author.name || item.author.username} Reposted
-                        </Text>
-                    </View>
-                )}
-
-                <View className="flex-row gap-3">
-                    <TouchableOpacity onPress={() => router.push(`/u/${contentPost.author.username}`)}>
-                        <View className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                            {contentPost.author.image ? (
-                                <Image source={{ uri: getImageUrl(contentPost.author.image)! }} className="w-full h-full" />
-                            ) : (
-                                <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                    <Text className="text-black dark:text-white text-lg font-bold">
-                                        {(contentPost.author.username?.[0] || '?').toUpperCase()}
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    </TouchableOpacity>
-                    <View className="flex-1">
-                        <View className="flex-row items-center gap-2">
-                            <TouchableOpacity onPress={() => router.push(`/u/${contentPost.author.username}`)}>
-                                <Text className="font-bold text-black dark:text-white text-lg">{contentPost.author.name || contentPost.author.username}</Text>
-                            </TouchableOpacity>
-                            <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
-                            <Text className="text-gray-500 text-base">· {new Date(contentPost.createdAt).toLocaleDateString()}</Text>
-                        </View>
-
-                        {contentPost.content && (
-                            <PostContent content={contentPost.content} />
-                        )}
-
-                        {contentPost.image && (
-                            <Image
-                                source={{ uri: getImageUrl(contentPost.image)! }}
-                                className="mt-3 w-full h-64 rounded-xl bg-gray-200 dark:bg-gray-800"
-                                resizeMode="cover"
-                            />
-                        )}
-
-                        {contentPost.quote && (
-                            <TouchableOpacity
-                                className="mt-3 border border-gray-200 dark:border-gray-800 rounded-xl p-3 overflow-hidden"
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    router.push(`/post/${contentPost.quote!.id}`);
-                                }}
-                            >
-                                <View className="flex-row items-center gap-2 mb-1">
-                                    <View className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                                        {contentPost.quote.author.image ? (
-                                            <Image source={{ uri: getImageUrl(contentPost.quote.author.image)! }} className="w-full h-full" />
-                                        ) : (
-                                            <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                                <Text className="text-black dark:text-white text-xs font-bold">
-                                                    {(contentPost.quote.author.username?.[0] || '?').toUpperCase()}
-                                                </Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                    <Text className="font-bold text-black dark:text-white text-base">{contentPost.quote.author.name || contentPost.quote.author.username}</Text>
-                                    <Text className="text-gray-500 text-base">@{contentPost.quote.author.username}</Text>
-                                    <Text className="text-gray-500 text-base">· {new Date(contentPost.quote.createdAt).toLocaleDateString()}</Text>
-                                </View>
-                                <QuotedPostContent content={contentPost.quote.content || ''} />
-                                {contentPost.quote.image && (
-                                    <Image
-                                        source={{ uri: getImageUrl(contentPost.quote.image)! }}
-                                        className="mt-2 w-full h-40 rounded-lg bg-gray-200 dark:bg-gray-800"
-                                        resizeMode="cover"
-                                    />
-                                )}
-                            </TouchableOpacity>
-                        )}
-
-                        <View className="mt-3 flex-row justify-between pr-8">
-                            <TouchableOpacity
-                                className="flex-row items-center gap-1"
-                                onPress={() => handleReply(contentPost)}
-                            >
-                                <Ionicons name="chatbubble-outline" size={18} color="gray" />
-                                <Text className="text-gray-500 text-base">{contentPost._count.replies}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                className="flex-row items-center gap-1"
-                                onPress={() => openRepostModal(contentPost)}
-                            >
-                                <Ionicons name="git-compare-outline" size={20} color="gray" />
-                                <Text className="text-gray-500 text-base">{(contentPost._count.reposts || 0) + (contentPost._count.quotes || 0)}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                className="flex-row items-center gap-1"
-                                onPress={() => handleLike(contentPost.id, contentPost.likedByMe)}
-                            >
-                                <Ionicons name={contentPost.likedByMe ? "heart" : "heart-outline"} size={20} color={contentPost.likedByMe ? "red" : "gray"} />
-                                <Text className={`text-base ${contentPost.likedByMe ? 'text-red-500' : 'text-gray-500'}`}>
-                                    {contentPost._count.likes}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity className="flex-row items-center gap-1">
-                                <Ionicons name="stats-chart-outline" size={18} color="gray" />
-                                <Text className="text-gray-500 text-base">0</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </TouchableOpacity>
-        );
-    };
+    const renderItem = ({ item }: { item: Post }) => (
+        <PostCard
+            post={item}
+            originalAuthor={item.repost ? item.author : undefined}
+            onPress={() => router.push(`/post/${item.repost ? item.repost.id : item.id}`)}
+            onAuthorPress={(username) => router.push(`/u/${username}`)}
+            onReply={() => handleReply(item.repost ? item.repost : item)}
+            onRepost={() => openRepostModal(item.repost ? item.repost : item)}
+            onLike={() => handleLike((item.repost ? item.repost : item).id, (item.repost ? item.repost : item).likedByMe)}
+            onQuotePress={(quoteId) => router.push(`/post/${quoteId}`)}
+        />
+    );
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-black">
-            <View className="border-b border-gray-200 dark:border-gray-800 p-4 flex-row justify-between items-center">
+            <View className="border-b border-gray-200 dark:border-gray-800 p-2 flex-row justify-between items-center">
                 <TouchableOpacity onPress={() => setSidebarVisible(true)}>
                     <View className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
                         {currentUser?.image ? (

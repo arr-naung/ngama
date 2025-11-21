@@ -55,6 +55,14 @@ export async function GET(
                         where: { userId: currentUserId },
                         select: { userId: true }
                     } : false,
+                    reposts: currentUserId ? {
+                        where: { authorId: currentUserId },
+                        select: { authorId: true }
+                    } : false,
+                    quotes: currentUserId ? {
+                        where: { authorId: currentUserId },
+                        select: { authorId: true }
+                    } : false,
                     repost: {
                         include: {
                             author: {
@@ -71,6 +79,10 @@ export async function GET(
                             likes: currentUserId ? {
                                 where: { userId: currentUserId },
                                 select: { userId: true }
+                            } : false,
+                            reposts: currentUserId ? {
+                                where: { authorId: currentUserId },
+                                select: { authorId: true }
                             } : false
                         }
                     },
@@ -119,6 +131,10 @@ export async function GET(
                     where: { userId: currentUserId },
                     select: { userId: true }
                 } : false,
+                reposts: currentUserId ? {
+                    where: { authorId: currentUserId },
+                    select: { authorId: true }
+                } : false,
                 repost: {
                     include: {
                         author: {
@@ -154,6 +170,10 @@ export async function GET(
                         likes: currentUserId ? {
                             where: { userId: currentUserId },
                             select: { userId: true }
+                        } : false,
+                        reposts: currentUserId ? {
+                            where: { authorId: currentUserId },
+                            select: { authorId: true }
                         } : false
                     }
                 },
@@ -174,6 +194,10 @@ export async function GET(
                             where: { userId: currentUserId },
                             select: { userId: true }
                         } : false,
+                        reposts: currentUserId ? {
+                            where: { authorId: currentUserId },
+                            select: { authorId: true }
+                        } : false,
                         repost: {
                             include: {
                                 author: {
@@ -190,6 +214,10 @@ export async function GET(
                                 likes: currentUserId ? {
                                     where: { userId: currentUserId },
                                     select: { userId: true }
+                                } : false,
+                                reposts: currentUserId ? {
+                                    where: { authorId: currentUserId },
+                                    select: { authorId: true }
                                 } : false
                             }
                         },
@@ -226,8 +254,12 @@ export async function GET(
 
         const formatPost = (p: any) => ({
             ...p,
-            likedByMe: p.likes ? p.likes.length > 0 : false,
-            likes: undefined
+            isLikedByMe: p.likes ? p.likes.length > 0 : false,
+            isRepostedByMe: p.reposts ? p.reposts.length > 0 : false,
+            isQuotedByMe: p.quotes ? p.quotes.length > 0 : false,
+            likes: undefined,
+            reposts: p._count?.reposts,
+            quotes: undefined
         });
 
         const postWithStatus = {
