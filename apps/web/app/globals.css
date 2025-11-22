@@ -42,6 +42,7 @@
   --primary-foreground: #ffffff;
   --muted: #1f2937;
   --muted-foreground: #9ca3af;
+  --border: #374151;
 }
 
 body {

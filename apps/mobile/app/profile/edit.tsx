@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, Image, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import { API_URL } from '../../constants';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
 
 export default function EditProfileScreen() {
@@ -10,15 +13,15 @@ export default function EditProfileScreen() {
     const [name, setName] = useState('');
     const [bio, setBio] = useState('');
     const [image, setImage] = useState('');
+    const [coverImage, setCoverImage] = useState('');
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
     const { colorScheme } = useColorScheme();
 
     useEffect(() => {
         fetchProfile();
     }, []);
-
-
 
     const fetchProfile = async () => {
         try {
@@ -38,12 +41,73 @@ export default function EditProfileScreen() {
                 setName(data.name || '');
                 setBio(data.bio || '');
                 setImage(data.image || '');
+                setCoverImage(data.coverImage || '');
             }
 
             setInitialLoading(false);
         } catch (error) {
             console.error(error);
             setInitialLoading(false);
+        }
+    };
+
+    const pickImage = async (field: 'image' | 'coverImage') => {
+        // Request permission
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission needed', 'We need camera roll permissions to upload images');
+            return;
+        }
+
+        // Pick image
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: field === 'coverImage' ? [16, 9] : [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            uploadImage(result.assets[0].uri, field);
+        }
+    };
+
+    const uploadImage = async (uri: string, field: 'image' | 'coverImage') => {
+        setUploading(true);
+        try {
+            // Create form data
+            const formData = new FormData();
+            const filename = uri.split('/').pop() || 'image.jpg';
+            const match = /\.(\w+)$/.exec(filename);
+            const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+            formData.append('file', {
+                uri,
+                name: filename,
+                type,
+            } as any);
+
+            // Upload
+            const res = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            const data = await res.json();
+            if (data.url) {
+                if (field === 'image') setImage(data.url);
+                else setCoverImage(data.url);
+            } else {
+                Alert.alert('Error', 'Failed to upload image');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            Alert.alert('Error', 'Failed to upload image');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -62,7 +126,7 @@ export default function EditProfileScreen() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, bio, image })
+                body: JSON.stringify({ name, bio, image, coverImage })
             });
 
             if (res.ok) {
@@ -81,64 +145,118 @@ export default function EditProfileScreen() {
 
     if (initialLoading) {
         return (
-            <View className="flex-1 bg-white dark:bg-black justify-center items-center">
-                <ActivityIndicator color={colorScheme === 'dark' ? 'white' : 'black'} />
-            </View>
+            <SafeAreaView className="flex-1 bg-white dark:bg-black">
+                <View className="flex-1 justify-center items-center">
+                    <ActivityIndicator color={colorScheme === 'dark' ? 'white' : 'black'} />
+                </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View className="flex-1 bg-white dark:bg-black p-4">
+        <SafeAreaView className="flex-1 bg-white dark:bg-black" edges={['top', 'bottom']}>
             <Stack.Screen
                 options={{
                     title: 'Edit Profile',
                     headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
                     headerStyle: { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' },
-                    headerRight: () => (
-                        <TouchableOpacity onPress={handleSave} disabled={loading}>
-                            <Text className={`text-blue-500 font-bold ${loading ? 'opacity-50' : ''}`}>Save</Text>
-                        </TouchableOpacity>
-                    )
                 }}
             />
 
-            <View className="space-y-4 mt-4">
-                <View>
-                    <Text className="text-gray-500 mb-1">Name</Text>
-                    <TextInput
-                        className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg"
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Name"
-                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
-                    />
-                </View>
+            <ScrollView className="flex-1">
+                <View className="p-4 space-y-4">
+                    {/* Cover Image */}
+                    <View>
+                        <Text className="text-gray-500 mb-2">Cover Image</Text>
+                        <TouchableOpacity
+                            onPress={() => pickImage('coverImage')}
+                            disabled={uploading}
+                            className="relative h-32 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden"
+                        >
+                            {coverImage ? (
+                                <Image source={{ uri: getImageUrl(coverImage)! }} className="w-full h-full" resizeMode="cover" />
+                            ) : (
+                                <View className="w-full h-full bg-gray-200 dark:bg-gray-800" />
+                            )}
+                            <View className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <View className="bg-black/60 px-4 py-2 rounded-full">
+                                    <Text className="text-white font-semibold">
+                                        {uploading ? 'Uploading...' : 'Change Cover'}
+                                    </Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
 
-                <View>
-                    <Text className="text-gray-500 mb-1">Bio</Text>
-                    <TextInput
-                        className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg h-24"
-                        value={bio}
-                        onChangeText={setBio}
-                        placeholder="Bio"
-                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
-                        multiline
-                        textAlignVertical="top"
-                    />
-                </View>
+                    {/* Profile Image */}
+                    <View>
+                        <Text className="text-gray-500 mb-2">Profile Image</Text>
+                        <TouchableOpacity
+                            onPress={() => pickImage('image')}
+                            disabled={uploading}
+                            className="relative w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden self-start"
+                        >
+                            {image ? (
+                                <Image source={{ uri: getImageUrl(image)! }} className="w-full h-full" resizeMode="cover" />
+                            ) : (
+                                <View className="w-full h-full bg-gray-200 dark:bg-gray-800 items-center justify-center">
+                                    <Ionicons name="person" size={40} color={colorScheme === 'dark' ? '#666' : '#ccc'} />
+                                </View>
+                            )}
+                            <View className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <View className="bg-black/60 px-2 py-1 rounded-full">
+                                    <Text className="text-white text-xs font-semibold">
+                                        {uploading ? '...' : 'Edit'}
+                                    </Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
 
-                <View>
-                    <Text className="text-gray-500 mb-1">Profile Image URL</Text>
-                    <TextInput
-                        className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg"
-                        value={image}
-                        onChangeText={setImage}
-                        placeholder="https://..."
-                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
-                        autoCapitalize="none"
-                    />
+                    {/* Name */}
+                    <View>
+                        <Text className="text-gray-500 mb-1">Name</Text>
+                        <TextInput
+                            className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg"
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="Name"
+                            placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
+                            maxLength={50}
+                        />
+                    </View>
+
+                    {/* Bio */}
+                    <View>
+                        <Text className="text-gray-500 mb-1">Bio</Text>
+                        <TextInput
+                            className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg h-24"
+                            value={bio}
+                            onChangeText={setBio}
+                            placeholder="Bio"
+                            placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
+                            multiline
+                            textAlignVertical="top"
+                            maxLength={160}
+                        />
+                    </View>
+
+                    {/* Save Button */}
+                    <TouchableOpacity
+                        onPress={handleSave}
+                        disabled={loading || uploading}
+                        className={`bg-black dark:bg-white rounded-full py-3 items-center mt-6 ${(loading || uploading) ? 'opacity-50' : ''}`}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color={colorScheme === 'dark' ? 'black' : 'white'} />
+                        ) : (
+                            <Text className="text-white dark:text-black font-bold text-base">
+                                Save
+                            </Text>
+                        )}
+                    </TouchableOpacity>
                 </View>
-            </View>
-        </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 }

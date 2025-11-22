@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList, RefreshControl, Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { API_URL, getImageUrl } from '../../constants';
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
     const { colorScheme } = useColorScheme();
     const [repostModalVisible, setRepostModalVisible] = useState(false);
     const [selectedPost, setSelectedPost] = useState<any>(null);
+    const [isOwnProfile, setIsOwnProfile] = useState(false);
 
     const fetchProfile = async () => {
         try {
@@ -45,6 +47,16 @@ export default function ProfileScreen() {
                     setIsFollowing(data.isFollowedByMe);
                     setFollowersCount(data._count.followers);
                     setFollowingCount(data._count.following);
+
+                    // Check if this is the current user's own profile
+                    if (token) {
+                        try {
+                            const payload = JSON.parse(atob(token.split('.')[1]));
+                            setIsOwnProfile(payload.username === username);
+                        } catch (e) {
+                            console.error('Failed to decode token:', e);
+                        }
+                    }
                 } else {
                     console.error('[fetchProfile] API Error:', data);
                 }
@@ -126,10 +138,36 @@ export default function ProfileScreen() {
     const renderHeader = () => (
         <>
             <View className="border-b border-gray-200 dark:border-gray-800 pb-4">
-                <View className="h-32 bg-gray-200 dark:bg-gray-800" />
+                {/* Cover Photo with Back and Share Buttons */}
+                <View className="relative">
+                    {/* Cover Image */}
+                    {user.coverImage ? (
+                        <Image source={{ uri: getImageUrl(user.coverImage)! }} className="w-full h-32" resizeMode="cover" />
+                    ) : (
+                        <View className="h-32 bg-gray-200 dark:bg-gray-800" />
+                    )}
+
+                    {/* Transparent Back Button */}
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        className="absolute top-4 left-4 w-10 h-10 rounded-full items-center justify-center"
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="white" />
+                    </TouchableOpacity>
+
+                    {/* Transparent Share Button */}
+                    <TouchableOpacity
+                        onPress={() => alert('Share profile')}
+                        className="absolute top-4 right-4 w-10 h-10 rounded-full items-center justify-center"
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                    >
+                        <Ionicons name="share-outline" size={24} color="white" />
+                    </TouchableOpacity>
+                </View>
                 <View className="px-4 relative">
-                    <View className="absolute -top-16 left-4">
-                        <View className="w-24 h-24 rounded-full bg-white dark:bg-black p-1">
+                    <View className="absolute -top-10 left-4">
+                        <View className="w-20 h-20 rounded-full" style={{ backgroundColor: 'white', borderWidth: 3, borderColor: 'white' }}>
                             <View className="w-full h-full rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden justify-center items-center">
                                 {user.image ? (
                                     <Image source={{ uri: getImageUrl(user.image)! }} className="w-full h-full" />
@@ -140,26 +178,29 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
-                    <View className="flex-row justify-end pt-4">
-                        {/* TODO: Check if it's me properly. For now, assume not me or add logic later */}
-                        <TouchableOpacity
-                            onPress={() => router.push('/profile/edit')}
-                            className="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 mr-2"
-                        >
-                            <Text className="text-black dark:text-white font-bold text-base">Edit</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={handleFollow}
-                            className={`px-4 py-2 rounded-full ${isFollowing ? 'border border-gray-300 dark:border-gray-600' : 'bg-black dark:bg-white'}`}
-                        >
-                            <Text className={`font-bold text-base ${isFollowing ? 'text-black dark:text-white' : 'text-white dark:text-black'}`}>
-                                {isFollowing ? 'Following' : 'Follow'}
-                            </Text>
-                        </TouchableOpacity>
+                    <View className="flex-row justify-end pt-2">
+                        {isOwnProfile ? (
+                            // Show Edit button for own profile
+                            <TouchableOpacity
+                                onPress={() => router.push('/profile/edit')}
+                                className="px-4 py-1 rounded-full border border-gray-300 dark:border-gray-600"
+                            >
+                                <Text className="text-black dark:text-white font-bold text-base">Edit profile</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            // Show Follow button for other users
+                            <TouchableOpacity
+                                onPress={handleFollow}
+                                className={`px-4 py-1 rounded-full ${isFollowing ? 'border border-gray-300 dark:border-gray-600' : 'bg-black dark:bg-white'}`}
+                            >
+                                <Text className={`font-bold text-base ${isFollowing ? 'text-black dark:text-white' : 'text-white dark:text-black'}`}>
+                                    {isFollowing ? 'Following' : 'Follow'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
-                    <View className="mt-4">
+                    <View className="mt-1">
                         <Text className="text-black dark:text-white text-2xl font-bold">{user.name || user.username}</Text>
                         <Text className="text-gray-500 text-lg">@{user.username}</Text>
                     </View>
@@ -305,7 +346,7 @@ export default function ProfileScreen() {
     };
 
     return (
-        <View className="flex-1 bg-white dark:bg-black">
+        <SafeAreaView className="flex-1 bg-white dark:bg-black" edges={['top', 'bottom']}>
             <Stack.Screen options={{ title: user.username, headerTintColor: colorScheme === 'dark' ? 'white' : 'black', headerStyle: { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' } }} />
             <FlatList
                 data={posts}
@@ -353,6 +394,6 @@ export default function ProfileScreen() {
                     </View>
                 </TouchableOpacity>
             </Modal>
-        </View>
+        </SafeAreaView>
     );
 }

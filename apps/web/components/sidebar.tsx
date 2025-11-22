@@ -49,7 +49,7 @@ export default function Sidebar() {
     };
 
     return (
-        <div className="fixed left-0 top-0 h-full w-64 bg-background p-4 hidden md:flex flex-col">
+        <div className="sticky top-0 h-screen w-64 bg-background p-4 pl-6 hidden md:flex flex-col">
             <div className="mb-4 px-4 py-2">
                 <XLogo className="w-8 h-8" />
             </div>
