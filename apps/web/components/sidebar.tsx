@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
-import { XLogo, HomeIcon, SearchIcon, NotificationsIcon, ProfileIcon } from './icons';
+import { XLogo } from './x-logo';
+import { HomeIcon, SearchIcon, NotificationsIcon, ProfileIcon } from './icons';
 
 export default function Sidebar() {
     const pathname = usePathname();

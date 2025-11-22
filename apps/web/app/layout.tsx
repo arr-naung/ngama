@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LayoutWrapper } from "@/components/layout-wrapper";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -29,14 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-background text-foreground antialiased">
         <ThemeProvider defaultTheme="system" storageKey="app-theme">
-          <div className="flex min-h-screen max-w-7xl mx-auto">
-            <Sidebar />
-            <main className="flex-1 md:ml-64 min-h-screen">
-              <div className="max-w-2xl w-full border-x border-border min-h-screen mx-auto">
-                {children}
-              </div>
-            </main>
-          </div>
+          <LayoutWrapper>{children}</LayoutWrapper>
         </ThemeProvider>
       </body>
     </html>

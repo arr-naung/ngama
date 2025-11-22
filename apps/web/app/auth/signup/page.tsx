@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { XLogo } from '@/components/x-logo';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -12,10 +13,12 @@ export default function SignupPage() {
         password: ''
     });
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         try {
             const res = await fetch('/api/auth/signup', {
@@ -30,74 +33,92 @@ export default function SignupPage() {
                 throw new Error(data.error || 'Signup failed');
             }
 
-            // Store token (in real app, use secure cookie or specialized auth lib)
             localStorage.setItem('token', data.token);
             router.push('/');
         } catch (err: any) {
             setError(err.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
-            <div className="w-full max-w-md p-8">
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold">Join X today</h1>
-                </div>
+        <div className="flex min-h-screen">
+            {/* Left side - Big X Logo */}
+            <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-white">
+                <XLogo size={350} className="text-black" />
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {error && (
-                        <div className="rounded bg-red-500/10 p-3 text-red-500">
-                            {error}
+            {/* Right side - Sign up Form */}
+            <div className="flex w-full lg:w-1/2 items-center justify-center bg-white px-6 py-12 lg:px-8">
+                <div className="w-full max-w-md">
+                    {/* Mobile Logo */}
+                    <div className="mb-8 flex justify-center lg:hidden">
+                        <XLogo size={40} className="text-black" />
+                    </div>
+
+                    <h1 className="mb-6 text-3xl font-bold text-black lg:text-4xl">Happening now</h1>
+                    <h2 className="mb-8 text-xl font-bold text-black lg:text-2xl">Join today.</h2>
+
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {error && (
+                            <div className="rounded-md border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600">
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                required
+                            />
                         </div>
-                    )}
 
-                    <div>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            className="w-full rounded border border-gray-800 bg-black p-3 text-white focus:border-blue-500 focus:outline-none"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            required
-                        />
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Username"
+                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full rounded-full bg-black py-3 text-base font-bold text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                        >
+                            {isLoading ? 'Creating account...' : 'Create account'}
+                        </button>
+                    </form>
+
+                    {/* Sign in link */}
+                    <div className="mt-8">
+                        <p className="text-sm text-gray-600 lg:text-base">
+                            Have an account already?{' '}
+                            <Link href="/auth/signin" className="text-blue-500 hover:underline">
+                                Sign in
+                            </Link>
+                        </p>
                     </div>
-
-                    <div>
-                        <input
-                            type="text"
-                            placeholder="Username"
-                            className="w-full rounded border border-gray-800 bg-black p-3 text-white focus:border-blue-500 focus:outline-none"
-                            value={formData.username}
-                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            className="w-full rounded border border-gray-800 bg-black p-3 text-white focus:border-blue-500 focus:outline-none"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="w-full rounded-full bg-white py-3 font-bold text-black hover:bg-gray-200 transition"
-                    >
-                        Create account
-                    </button>
-                </form>
-
-                <div className="mt-8 text-center text-gray-500">
-                    Have an account already?{' '}
-                    <Link href="/auth/signin" className="text-blue-500 hover:underline">
-                        Log in
-                    </Link>
                 </div>
             </div>
         </div>
