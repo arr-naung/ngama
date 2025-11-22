@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '../../../constants';
 
 export default function FollowsScreen() {
@@ -51,7 +52,7 @@ export default function FollowsScreen() {
     };
 
     return (
-        <View className="flex-1 bg-white dark:bg-black">
+        <SafeAreaView className="flex-1 bg-white dark:bg-black" edges={['top', 'bottom']}>
             <Stack.Screen options={{
                 title: username,
                 headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
@@ -118,6 +119,6 @@ export default function FollowsScreen() {
                     }
                 />
             )}
-        </View>
+        </SafeAreaView>
     );
 }
