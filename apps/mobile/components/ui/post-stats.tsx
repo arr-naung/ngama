@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { RepostIcon, ViewsIcon } from '../icons';
 
 interface PostStatsProps {
     replies: number;
@@ -52,7 +53,7 @@ export function PostStats({
                 onPress={onRepost}
                 disabled={!onRepost}
             >
-                <Ionicons name="git-compare-outline" size={iconSize} color={(repostedByMe || quotedByMe) ? "#00BA7C" : "gray"} />
+                <RepostIcon size={iconSize} color={(repostedByMe || quotedByMe) ? "#00BA7C" : "gray"} />
                 <Text className={`${textSize} ${(repostedByMe || quotedByMe) ? 'text-green-500' : 'text-gray-500'}`}>{(reposts || 0) + (quotes || 0)}</Text>
             </TouchableOpacity>
 
@@ -74,7 +75,7 @@ export function PostStats({
 
             {/* Views */}
             <View className="flex-row items-center gap-1">
-                <Ionicons name="stats-chart-outline" size={iconSize} color="gray" />
+                <ViewsIcon size={iconSize} color="gray" />
                 <Text className={`text-gray-500 ${textSize}`}>{views}</Text>
             </View>
         </View>

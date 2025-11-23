@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProfileHeader from '@/components/profile-header';
 import PostList from '@/components/post-list';
+import { API_URL } from '@/lib/api';
 
 export default function ProfilePage() {
     const params = useParams();
@@ -22,7 +23,7 @@ export default function ProfilePage() {
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
-                const res = await fetch(`/api/users/${username}`, { headers });
+                const res = await fetch(`${API_URL}/users/${username}`, { headers });
                 if (!res.ok) {
                     if (res.status === 404) throw new Error('User not found');
                     throw new Error('Failed to fetch profile');
@@ -89,7 +90,7 @@ export default function ProfilePage() {
             <div className="border-t border-border">
                 <PostList
                     key={activeTab} // Force re-mount on tab change
-                    apiUrl={`/api/users/${username}/posts?type=${activeTab}`}
+                    apiUrl={`${API_URL}/users/${username}/posts?type=${activeTab}`}
                 />
             </div>
         </main>

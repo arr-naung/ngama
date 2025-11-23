@@ -7,6 +7,8 @@ import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { QuotedPostContent } from '../../components/post-content';
+import { QuotedPostCard } from '../../components/ui/quoted-post-card';
+import { RepostIcon, ViewsIcon } from '../../components/icons';
 
 export default function PostDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -228,7 +230,7 @@ export default function PostDetailsScreen() {
                 <View className="border-b border-gray-200 dark:border-gray-800 p-2">
                     {isRepost && (
                         <View className="flex-row items-center gap-2 mb-2">
-                            <Ionicons name="repeat" size={16} color="#71767B" />
+                            <RepostIcon size={14} color="#71767B" />
                             <Text className="text-[#71767B] text-sm font-bold">
                                 {item.author.name || item.author.username} Reposted
                             </Text>
@@ -272,22 +274,10 @@ export default function PostDetailsScreen() {
                     )}
 
                     {contentPost.quote && (
-                        <TouchableOpacity
-                            className="border border-gray-200 dark:border-gray-800 rounded-xl p-3 overflow-hidden mb-3"
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                router.push(`/post/${contentPost.quote!.id}`);
-                            }}
-                        >
-                            <QuotedPostContent content={contentPost.quote.content || ''} />
-                            {contentPost.quote.image && (
-                                <Image
-                                    source={{ uri: getImageUrl(contentPost.quote.image)! }}
-                                    className="mt-2 w-full h-32 rounded-lg bg-gray-200 dark:bg-gray-800"
-                                    resizeMode="cover"
-                                />
-                            )}
-                        </TouchableOpacity>
+                        <QuotedPostCard
+                            quote={contentPost.quote}
+                            onPress={() => router.push(`/post/${contentPost.quote!.id}`)}
+                        />
                     )}
 
                     {/* Date */}
@@ -311,27 +301,27 @@ export default function PostDetailsScreen() {
                     <View className="flex-row justify-around py-3 mt-1">
                         <TouchableOpacity
                             onPress={() => handleItemReply(contentPost)}
-                            className="p-2"
+                            className="p-1"
                         >
-                            <Ionicons name="chatbubble-outline" size={24} color="gray" />
+                            <Ionicons name="chatbubble-outline" size={16} color="gray" />
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => openRepostModal(contentPost)}
-                            className="p-2"
+                            className="p-1"
                         >
-                            <Ionicons name="git-compare-outline" size={24} color={(contentPost.isRepostedByMe || contentPost.isQuotedByMe) ? "#00BA7C" : "gray"} />
+                            <RepostIcon size={16} color={(contentPost.isRepostedByMe || contentPost.isQuotedByMe) ? "#00BA7C" : "gray"} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className="p-2"
+                            className="p-1"
                             onPress={() => handleLike(contentPost)}
                         >
-                            <Ionicons name={contentPost.isLikedByMe ? "heart" : "heart-outline"} size={24} color={contentPost.isLikedByMe ? "red" : "gray"} />
+                            <Ionicons name={contentPost.isLikedByMe ? "heart" : "heart-outline"} size={16} color={contentPost.isLikedByMe ? "red" : "gray"} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className="p-2"
+                            className="p-1"
                             onPress={() => handleShare(contentPost)}
                         >
-                            <Ionicons name="share-outline" size={24} color="gray" />
+                            <Ionicons name="share-outline" size={16} color="gray" />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -346,7 +336,7 @@ export default function PostDetailsScreen() {
             >
                 {isRepost && (
                     <View className="flex-row items-center gap-2 mb-2 ml-8">
-                        <Ionicons name="repeat" size={16} color="#71767B" />
+                        <RepostIcon size={14} color="#71767B" />
                         <Text className="text-[#71767B] text-sm font-bold">
                             {item.author.name || item.author.username} Reposted
                         </Text>
@@ -389,38 +379,10 @@ export default function PostDetailsScreen() {
                         )}
 
                         {contentPost.quote && (
-                            <TouchableOpacity
-                                className="mt-3 border border-gray-200 dark:border-gray-800 rounded-xl p-3 overflow-hidden"
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    router.push(`/post/${contentPost.quote!.id}`);
-                                }}
-                            >
-                                <View className="flex-row items-center gap-2 mb-1">
-                                    <View className="h-5 w-5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                                        {contentPost.quote.author.image ? (
-                                            <Image source={{ uri: getImageUrl(contentPost.quote.author.image)! }} className="w-full h-full" />
-                                        ) : (
-                                            <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                                <Text className="text-black dark:text-white text-[10px] font-bold">
-                                                    {(contentPost.quote.author.username?.[0] || '?').toUpperCase()}
-                                                </Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                    <Text className="font-bold text-black dark:text-white text-sm">{contentPost.quote.author.name || contentPost.quote.author.username}</Text>
-                                    <Text className="text-gray-500 text-sm">@{contentPost.quote.author.username}</Text>
-                                    <Text className="text-gray-500 text-sm">· {new Date(contentPost.quote.createdAt).toLocaleDateString()}</Text>
-                                </View>
-                                <QuotedPostContent content={contentPost.quote.content || ''} />
-                                {contentPost.quote.image && (
-                                    <Image
-                                        source={{ uri: getImageUrl(contentPost.quote.image)! }}
-                                        className="mt-2 w-full h-32 rounded-lg bg-gray-200 dark:bg-gray-800"
-                                        resizeMode="cover"
-                                    />
-                                )}
-                            </TouchableOpacity>
+                            <QuotedPostCard
+                                quote={contentPost.quote}
+                                onPress={() => router.push(`/post/${contentPost.quote!.id}`)}
+                            />
                         )}
 
                         <View className="flex-row mt-3 justify-between pr-8">
@@ -428,22 +390,22 @@ export default function PostDetailsScreen() {
                                 className="flex-row items-center gap-1"
                                 onPress={() => handleItemReply(contentPost)}
                             >
-                                <Ionicons name="chatbubble-outline" size={18} color="gray" />
+                                <Ionicons name="chatbubble-outline" size={16} color="gray" />
                                 <Text className="text-gray-500 text-base">{contentPost._count.replies}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 className="flex-row items-center gap-1"
                                 onPress={() => openRepostModal(contentPost)}
                             >
-                                <Ionicons name="git-compare-outline" size={20} color="gray" />
+                                <RepostIcon size={16} color={(contentPost.isRepostedByMe || contentPost.isQuotedByMe) ? "#00BA7C" : "gray"} />
                                 <Text className="text-gray-500 text-base">{(contentPost._count.reposts || 0) + (contentPost._count.quotes || 0)}</Text>
                             </TouchableOpacity>
                             <View className="flex-row items-center gap-1">
-                                <Ionicons name={contentPost.likedByMe ? "heart" : "heart-outline"} size={20} color={contentPost.likedByMe ? "red" : "gray"} />
+                                <Ionicons name={contentPost.likedByMe ? "heart" : "heart-outline"} size={16} color={contentPost.likedByMe ? "red" : "gray"} />
                                 <Text className={`text-base ${contentPost.likedByMe ? 'text-red-500' : 'text-gray-500'}`}>{contentPost._count.likes}</Text>
                             </View>
                             <View className="flex-row items-center gap-1">
-                                <Ionicons name="stats-chart-outline" size={20} color="gray" />
+                                <ViewsIcon size={16} color="gray" />
                                 <Text className="text-gray-500 text-base">0</Text>
                             </View>
                         </View>
@@ -467,8 +429,25 @@ export default function PostDetailsScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-black" edges={['top']}>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-                <Stack.Screen options={{ title: 'Post', headerTintColor: colorScheme === 'dark' ? 'white' : 'black', headerStyle: { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' } }} />
+            <Stack.Screen options={{ headerShown: false }} />
+
+            {/* Custom Header */}
+            <View className="flex-row items-center px-4 py-2 border-b border-gray-200 dark:border-gray-800">
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    className="w-10 h-10 rounded-full items-center justify-center mr-4"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                >
+                    <Ionicons name="arrow-back" size={24} color="white" />
+                </TouchableOpacity>
+                <Text className="text-xl font-bold text-black dark:text-white">Post</Text>
+            </View>
+
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+                className="flex-1"
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
+            >
 
                 <FlatList
                     data={post.replies}

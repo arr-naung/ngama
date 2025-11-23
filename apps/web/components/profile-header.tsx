@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import EditProfileModal from './edit-profile-modal';
 import FollowListModal from './follow-list-modal';
+import { API_URL } from '@/lib/api';
 
 interface UserProfile {
     id: string;
@@ -44,7 +45,7 @@ export default function ProfileHeader({ user }: { user: UserProfile }) {
             try {
                 const parts = token.split('.');
                 if (parts.length < 2) throw new Error('Invalid token format');
-                const payload = JSON.parse(atob(parts[1]));
+                const payload = JSON.parse(atob(parts[1] as string));
                 if (payload.userId === user.id) {
                     setIsMe(true);
                 }
@@ -71,7 +72,7 @@ export default function ProfileHeader({ user }: { user: UserProfile }) {
         setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
 
         try {
-            const res = await fetch(`/api/users/${user.id}/follow`, {
+            const res = await fetch(`${API_URL}/users/${user.id}/follow`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/lib/api';
 
 interface SuggestedUser {
     id: string;
@@ -29,7 +30,7 @@ export default function RightSidebar() {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const res = await fetch('/api/users/suggested', { headers });
+            const res = await fetch(`${API_URL}/users/suggested`, { headers });
             if (res.ok) {
                 const data = await res.json();
                 setSuggestedUsers(data);
@@ -54,7 +55,7 @@ export default function RightSidebar() {
         ));
 
         try {
-            const res = await fetch(`/api/users/${userId}/follow`, {
+            const res = await fetch(`${API_URL}/users/${userId}/follow`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -125,7 +126,7 @@ export default function RightSidebar() {
                                             {user.image ? (
                                                 <img src={user.image} alt={user.username} className="w-full h-full object-cover" />
                                             ) : (
-                                                <span className="font-semibold text-sm">{user.username[0].toUpperCase()}</span>
+                                                <span className="font-semibold text-sm">{(user.username?.[0] || '?').toUpperCase()}</span>
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -136,8 +137,8 @@ export default function RightSidebar() {
                                     <button
                                         onClick={() => handleFollow(user.id, user.isFollowedByMe)}
                                         className={`px-4 py-1.5 rounded-full font-semibold text-sm transition ${user.isFollowedByMe
-                                                ? 'bg-transparent border border-border hover:bg-red-500/10 hover:text-red-500 hover:border-red-500'
-                                                : 'bg-foreground text-background hover:bg-foreground/90'
+                                            ? 'bg-transparent border border-border hover:bg-red-500/10 hover:text-red-500 hover:border-red-500'
+                                            : 'bg-foreground text-background hover:bg-foreground/90'
                                             }`}
                                     >
                                         {user.isFollowedByMe ? 'Following' : 'Follow'}

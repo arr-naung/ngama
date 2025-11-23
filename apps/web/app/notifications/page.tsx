@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { HeartIcon, RepostIcon, ReplyIcon } from '@/components/icons';
+import { API_URL } from '@/lib/api';
 
 interface Notification {
     id: string;
@@ -35,7 +36,7 @@ export default function NotificationsPage() {
             }
 
             try {
-                const res = await fetch('/api/notifications', {
+                const res = await fetch(`${API_URL}/notifications`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {

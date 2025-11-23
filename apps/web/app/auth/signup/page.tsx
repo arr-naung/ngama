@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { XLogo } from '@/components/x-logo';
 
+import { API_URL } from '@/lib/api';
+
 export default function SignupPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
@@ -21,7 +23,7 @@ export default function SignupPage() {
         setIsLoading(true);
 
         try {
-            const res = await fetch('/api/auth/signup', {
+            const res = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

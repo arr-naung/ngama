@@ -9,6 +9,7 @@ import QuoteModal from '@/components/quote-modal';
 import { PostCard, Post } from '@/components/post-card';
 import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon } from '@/components/icons';
 import { QuotedPostContent } from '@/components/post-content';
+import { API_URL } from '@/lib/api';
 
 export default function PostPage() {
     const params = useParams();
@@ -35,7 +36,7 @@ export default function PostPage() {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const res = await fetch(`/api/posts/${postId}`, { headers });
+            const res = await fetch(`${API_URL}/posts/${postId}`, { headers });
             if (!res.ok) {
                 if (res.status === 404) throw new Error('Post not found');
                 throw new Error('Failed to fetch post');
@@ -45,8 +46,10 @@ export default function PostPage() {
                 id: data.id,
                 isLikedByMe: data.isLikedByMe,
                 isRepostedByMe: data.isRepostedByMe,
+                isQuotedByMe: data.isQuotedByMe,
                 likes: data._count?.likes,
-                reposts: data._count?.reposts
+                reposts: data._count?.reposts,
+                quotes: data._count?.quotes
             });
             setPost(data);
         } catch (err: any) {
@@ -95,7 +98,7 @@ export default function PostPage() {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            await fetch(`/api/posts/${id}/like`, {
+            await fetch(`${API_URL}/posts/${id}/like`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -133,7 +136,7 @@ export default function PostPage() {
                 return;
             }
 
-            const res = await fetch('/api/posts', {
+            const res = await fetch(`${API_URL}/posts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -250,7 +253,7 @@ export default function PostPage() {
 
                     <div className="relative">
                         <button
-                            className={`group flex items-center gap-2 transition-colors ${contentPost.isRepostedByMe ? 'text-green-500' : 'hover:text-green-500'}`}
+                            className={`group flex items-center gap-2 transition-colors ${(p.isRepostedByMe || p.isQuotedByMe) ? 'text-green-500' : 'hover:text-green-500'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 e.nativeEvent.stopImmediatePropagation();
@@ -566,6 +569,38 @@ export default function PostPage() {
                     post={quotingPost}
                     isOpen={!!quotingPost}
                     onClose={() => setQuotingPost(null)}
+                    onSuccess={() => {
+                        // Update the post state to mark it as quoted
+                        if (post) {
+                            if (quotingPost.id === post.id) {
+                                setPost({
+                                    ...post,
+                                    isQuotedByMe: true,
+                                    _count: {
+                                        ...post._count,
+                                        quotes: post._count.quotes + 1
+                                    }
+                                });
+                            } else if (post.replies?.some(r => r.id === quotingPost.id)) {
+                                setPost({
+                                    ...post,
+                                    replies: post.replies.map(r =>
+                                        r.id === quotingPost.id
+                                            ? {
+                                                ...r,
+                                                isQuotedByMe: true,
+                                                _count: {
+                                                    ...r._count,
+                                                    quotes: r._count.quotes + 1
+                                                }
+                                            }
+                                            : r
+                                    )
+                                });
+                            }
+                        }
+                        setQuotingPost(null);
+                    }}
                 />
             )}
         </main>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/lib/api';
 
 interface User {
     id: string;
@@ -40,7 +41,7 @@ export default function FollowListModal({ isOpen, onClose, username, initialTab 
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const res = await fetch(`/api/users/${username}/follows?type=${activeTab}`, { headers });
+            const res = await fetch(`${API_URL}/users/${username}/follows?type=${activeTab}`, { headers });
             if (res.ok) {
                 const data = await res.json();
                 setUsers(data);
@@ -65,7 +66,7 @@ export default function FollowListModal({ isOpen, onClose, username, initialTab 
         ));
 
         try {
-            const res = await fetch(`/api/users/${targetUserId}/follow`, {
+            const res = await fetch(`${API_URL}/users/${targetUserId}/follow`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -128,7 +129,7 @@ export default function FollowListModal({ isOpen, onClose, username, initialTab 
                                                 <img src={user.image} alt={user.username} className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                    {user.username[0].toUpperCase()}
+                                                    {(user.username?.[0] || '?').toUpperCase()}
                                                 </div>
                                             )}
                                         </div>

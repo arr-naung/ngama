@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 @theme {
   --color-background: var(--background);
@@ -21,18 +22,6 @@
   --border: #e5e7eb;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark Mode System Preference */
-    --background: #000000;
-    --foreground: #ffffff;
-    --primary: #1d9bf0;
-    --primary-foreground: #ffffff;
-    --muted: #1f2937;
-    --muted-foreground: #9ca3af;
-    --border: #374151;
-  }
-}
 
 .dark {
   /* Dark Mode Manual Toggle */

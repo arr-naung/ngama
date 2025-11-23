@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import ReplyModal from './reply-modal';
 import QuoteModal from './quote-modal';
 import { PostCard, Post } from './post-card';
+import { API_URL } from '@/lib/api';
 
-export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string }) {
+export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: string }) {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -76,7 +77,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            await fetch(`/api/posts/${postId}/like`, {
+            await fetch(`${API_URL}/posts/${postId}/like`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -114,7 +115,7 @@ export default function PostList({ apiUrl = '/api/posts' }: { apiUrl?: string })
                 return;
             }
 
-            const res = await fetch('/api/posts', {
+            const res = await fetch(`${API_URL}/posts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

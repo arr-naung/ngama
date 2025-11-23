@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import TextareaAutosize from 'react-textarea-autosize';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { API_URL } from '@/lib/api';
 
 export default function PostInput({
     onSuccess,
@@ -31,7 +32,7 @@ export default function PostInput({
             const token = localStorage.getItem('token');
             if (!token) return;
             try {
-                const res = await fetch('/api/me', {
+                const res = await fetch(`${API_URL}/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -96,7 +97,7 @@ export default function PostInput({
                 const formData = new FormData();
                 formData.append('file', selectedFile);
 
-                const uploadRes = await fetch('/api/upload', {
+                const uploadRes = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
@@ -106,7 +107,7 @@ export default function PostInput({
                 imageUrl = uploadData.url;
             }
 
-            const res = await fetch('/api/posts', {
+            const res = await fetch(`${API_URL}/posts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,13 +162,13 @@ export default function PostInput({
                     </div>
                     <div className="flex-1 relative">
                         <div className="flex gap-2">
-                            <TextareaAutosize
+                            <textarea
                                 className={`w-full bg-transparent text-xl text-foreground placeholder:text-muted-foreground focus:outline-none resize-none ${parentId ? 'py-1' : ''}`}
                                 placeholder={placeholder}
-                                minRows={parentId ? 1 : 2}
-                                maxRows={15}
+                                rows={parentId ? 1 : 2}
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
+                                style={{ minHeight: parentId ? 'auto' : '100px' }}
                             />
                             {parentId && (
                                 <button

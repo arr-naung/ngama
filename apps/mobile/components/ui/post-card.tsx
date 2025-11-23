@@ -5,6 +5,7 @@ import { PostContent } from '../post-content';
 import { QuotedPostCard } from './quoted-post-card';
 import { PostStats } from './post-stats';
 import { getImageUrl } from '../../constants';
+import { RepostIcon } from '../icons';
 
 interface PostCardProps {
     post: {
@@ -72,8 +73,8 @@ export function PostCard({
             {/* Repost Indicator */}
             {isRepost && originalAuthor && (
                 <View className="flex-row items-center gap-2 mb-2 ml-8">
-                    <Ionicons name="repeat" size={16} color="#9CA3AF" />
-                    <Text className="text-gray-400 text-base font-bold">
+                    <RepostIcon size={14} color="#9CA3AF" />
+                    <Text className="text-gray-400 text-sm font-bold">
                         {originalAuthor.name || originalAuthor.username} Reposted
                     </Text>
                 </View>

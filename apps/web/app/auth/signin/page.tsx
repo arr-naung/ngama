@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { XLogo } from '@/components/x-logo';
 
+import { API_URL } from '@/lib/api';
+
 export default function SigninPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
@@ -20,7 +22,7 @@ export default function SigninPage() {
         setIsLoading(true);
 
         try {
-            const res = await fetch('/api/auth/signin', {
+            const res = await fetch(`${API_URL}/auth/signin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

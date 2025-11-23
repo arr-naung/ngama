@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
 import { XLogo } from './x-logo';
 import { HomeIcon, SearchIcon, NotificationsIcon, ProfileIcon } from './icons';
+import { API_URL } from '@/lib/api';
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -25,7 +26,7 @@ export default function Sidebar() {
                         setUsername(payload.username);
                     } else {
                         // Fallback: fetch from /api/me
-                        const res = await fetch('/api/me', {
+                        const res = await fetch(`${API_URL}/auth/me`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         if (res.ok) {

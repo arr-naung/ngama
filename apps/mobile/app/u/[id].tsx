@@ -359,6 +359,7 @@ export default function ProfileScreen() {
                         originalAuthor={item.repost ? item.author : undefined}
                         onPress={() => router.push(`/post/${item.id}`)}
                         onAuthorPress={(username) => router.push(`/u/${username}`)}
+                        onQuotePress={(quoteId) => router.push(`/post/${quoteId}`)}
                         onReply={() => router.push(`/compose?replyTo=${item.id}`)}
                         onRepost={() => openRepostModal(item)}
                         onLike={() => handleLike(item.id, item.isLikedByMe)}

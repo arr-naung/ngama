@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/lib/api';
 
 interface QuoteModalProps {
     post: {
@@ -36,7 +37,7 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
                 const token = localStorage.getItem('token');
                 if (!token) return;
                 try {
-                    const res = await fetch('/api/me', {
+                    const res = await fetch(`${API_URL}/auth/me`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (res.ok) {
@@ -95,7 +96,7 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
 
-                const uploadRes = await fetch('/api/upload', {
+                const uploadRes = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -111,7 +112,7 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
                 imageUrl = uploadData.url;
             }
 
-            const res = await fetch('/api/posts', {
+            const res = await fetch(`${API_URL}/posts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

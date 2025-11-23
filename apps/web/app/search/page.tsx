@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { SearchIcon } from '@/components/icons';
+import { API_URL } from '@/lib/api';
 
 interface SearchResults {
     users: Array<{
@@ -42,7 +43,7 @@ export default function SearchPage() {
 
         setLoading(true);
         try {
-            const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+            const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(searchQuery)}`);
             if (res.ok) {
                 const data = await res.json();
                 setResults(data);

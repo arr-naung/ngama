@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/lib/api';
 
 interface ReplyModalProps {
     post: {
@@ -47,7 +48,7 @@ export default function ReplyModal({ post, isOpen, onClose }: ReplyModalProps) {
                 return;
             }
 
-            const res = await fetch('/api/posts', {
+            const res = await fetch(`${API_URL}/posts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/lib/api';
 
 interface User {
     name: string | null;
@@ -36,8 +37,15 @@ export default function EditProfileModal({ user, isOpen, onClose }: EditProfileM
         formData.append('file', file);
 
         try {
-            const res = await fetch('/api/upload', {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(`${API_URL}/upload`, {
                 method: 'POST',
+                headers,
                 body: formData
             });
             const data = await res.json();
@@ -67,7 +75,7 @@ export default function EditProfileModal({ user, isOpen, onClose }: EditProfileM
             if (image !== user.image) body.image = image;
             if (coverImage !== user.coverImage) body.coverImage = coverImage;
 
-            const res = await fetch('/api/profile', {
+            const res = await fetch(`${API_URL}/profile`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
