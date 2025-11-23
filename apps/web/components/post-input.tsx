@@ -211,11 +211,16 @@ export default function PostInput({
                             <div className="relative" ref={emojiPickerRef}>
                                 <button
                                     type="button"
-                                    className="p-2 rounded-full hover:bg-primary/10 cursor-pointer transition-colors"
+                                    className="p-2 rounded-full hover:bg-primary/10 cursor-pointer transition-colors flex items-center justify-center"
                                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                    title="Emoji"
+                                    title="Add emoji"
                                 >
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5 fill-current"><g><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 2.5c.828 0 1.5-1.119 1.5-2.5S15.328 7 14.5 7 13 8.119 13 9.5s.672 2.5 1.5 2.5zM12 16c-2.224 0-4.224-1.225-5.242-3.015-.205-.357-.085-.806.269-1.01.351-.201.804-.084 1.005.271C8.721 13.53 10.263 14.5 12 14.5s3.279-.97 3.968-2.254c.201-.355.654-.472 1.005-.271.354.204.474.653.269 1.01C16.224 14.775 14.224 16 12 16z"></path></g></svg>
+                                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                                        <line x1="9" y1="9" x2="9.01" y2="9" />
+                                        <line x1="15" y1="9" x2="15.01" y2="9" />
+                                    </svg>
                                 </button>
                                 {showEmojiPicker && (
                                     <div className="absolute top-10 left-0 z-50 shadow-xl rounded-xl">

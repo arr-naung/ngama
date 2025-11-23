@@ -254,7 +254,7 @@ export default function Feed() {
                 <TouchableOpacity onPress={() => setSidebarVisible(true)}>
                     <View className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
                         {currentUser?.image ? (
-                            <Image source={{ uri: getImageUrl(currentUser.image)! }} className="w-full h-full" />
+                            <Image source={{ uri: getImageUrl(currentUser.image)! }} className="w-full h-full" resizeMode="cover" />
                         ) : (
                             <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
                                 <Text className="text-black dark:text-white text-xs font-bold">
