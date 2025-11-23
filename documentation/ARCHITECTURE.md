@@ -12,7 +12,7 @@ graph TB
     end
     
     subgraph "API Layer"
-        API[Next.js API Routes<br/>REST API]
+        API[NestJS Backend<br/>REST API<br/>Port 3001]
     end
     
     subgraph "Data Layer"
@@ -56,10 +56,12 @@ graph TB
 
 ### Backend
 
-- **Framework**: Next.js API Routes (REST API)
+- **Framework**: NestJS (Standalone API on port 3001)
 - **Language**: TypeScript
-- **Authentication**: JWT with bcryptjs
-- **Validation**: Zod schemas (shared package)
+- **Architecture**: Modular (Controllers, Services, Guards)
+- **Authentication**: JWT with Passport.js and bcryptjs
+- **Validation**: Zod schemas (shared package) + class-validator
+- **Guards**: OptionalAuthGuard for public/authenticated hybrid endpoints
 
 ### Database
 
@@ -141,14 +143,22 @@ sequenceDiagram
 ```
 Antigravity/
 ├── apps/
-│   ├── web/                    # Next.js web application
-│   │   ├── app/               # App Router pages and API routes
-│   │   │   ├── api/          # REST API endpoints
-│   │   │   ├── page.tsx      # Home page (feed)
-│   │   │   ├── profile/      # User profiles
-│   │   │   └── post/         # Post details
-│   │   ├── components/        # React components
-│   │   └── lib/              # Utilities (auth, etc.)
+│   ├── api/                   # NestJS backend API
+│   │   ├── src/
+│   │   │   ├── auth/         # Authentication module
+│   │   │   ├── posts/        # Posts module
+│   │   │   ├── users/        # Users module
+│   │   │   ├── upload/       # File upload module
+│   │   │   └── main.ts       # Entry point (port 3001)
+│   │   └── uploads/          # Uploaded files storage
+│   │
+│   ├── web/                   # Next.js web application
+│   │   ├── app/              # App Router pages
+│   │   │   ├── page.tsx     # Home page (feed)
+│   │   │   ├── u/           # User profiles
+│   │   │   └── post/        # Post details
+│   │   ├── components/       # React components
+│   │   └── lib/             # Utilities (API client, etc.)
 │   │
 │   └── mobile/                # React Native mobile app
 │       ├── app/              # Expo Router screens

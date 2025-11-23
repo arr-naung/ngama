@@ -1,47 +1,64 @@
-# Backend Migration Plan: Next.js -> NestJS
+# Backend Migration: Next.js → NestJS
 
-The goal is to move the "heavy" backend logic out of Next.js API Routes into a dedicated **NestJS** application (`apps/api`). This maintains the **Monorepo** structure (easy development) but allows the backend to be robust, scalable, and independently deployable.
+## Migration Status: ✅ COMPLETED
 
-## User Review Required
+The backend has been successfully migrated from Next.js API Routes to a dedicated NestJS application running on port 3001.
 
-> [!IMPORTANT]
-> This is a significant architectural change.
-> - We will create a new folder `apps/api`.
-> - We will move database logic from `apps/web` to `apps/api`.
-> - `apps/web` will become a pure frontend (fetching from `http://localhost:3001` instead of `/api`).
+## What Was Accomplished
 
-## Proposed Changes
+### Architecture Changes
+- ✅ Created standalone `apps/api` NestJS application
+- ✅ Configured NestJS to run on port 3001
+- ✅ Integrated Prisma ORM with NestJS modules
+- ✅ Updated web and mobile frontends to call NestJS API
 
-### 1. Initialize NestJS Application
-- Create `apps/api` using NestJS CLI.
-- Configure it to work with Turborepo (tsconfig, eslint).
+### Migrated Features
 
-### 2. Database Integration
-- Reuse `@repo/db` (Prisma) in `apps/api`.
-- Ensure `apps/api` can connect to the SQLite (later Postgres) database.
+#### ✅ Authentication Module
+- JWT-based authentication with Passport.js
+- Signup, Signin, and Get Current User endpoints
+- Proper error handling and validation
 
-### 3. Migrate Features (Iterative)
-We will migrate features one by one to avoid breaking everything at once.
+#### ✅ Users Module
+- User profile management
+- Follow/Unfollow functionality with toggle behavior
+- Followers and following lists endpoint
+- **OptionalAuthGuard** for public/authenticated hybrid endpoints
 
-#### Phase 1: Foundation
-- [NEW] `apps/api/src/app.module.ts`: Main module.
-- [NEW] `apps/api/src/main.ts`: Entry point (Port 3001).
-- [NEW] `apps/api/src/prisma/`: Database service.
+#### ✅ Posts Module
+- Post creation, retrieval, and threading
+- Replies, reposts, and quotes support
+- Like/unlike functionality
+- Interaction status flags (`isLikedByMe`, `isRepostedByMe`, `isQuotedByMe`)
 
-#### Phase 2: Authentication
-- Move JWT logic and `auth` routes (`signup`, `signin`, `me`) to NestJS.
-- Update `apps/web` and `apps/mobile` to point to new Auth endpoints.
+#### ✅ Upload Module
+- File upload with multer
+- Environment-based URL configuration
+- Local storage for development
 
-#### Phase 3: Posts & Feed
-- Move Post creation, Feed fetching, and Likes to NestJS Controllers/Services.
-- Implement proper Pagination and DTOs (Data Transfer Objects).
+#### ✅ Additional Features
+- Search functionality
+- Notifications system
 
-## Verification Plan
+## Verification Results
 
-### Automated Tests
-- Run `npx turbo dev` and ensure both `web` (3000) and `api` (3001) start.
-- Test API endpoints using `curl` or Postman.
+### Backend ✅
+- NestJS API successfully runs on port 3001
+- All endpoints tested and functional
+- CORS enabled for cross-origin requests
+- Database integration working correctly
 
-### Manual Verification
-- **Web**: Log in, view feed, create post (should route through new API).
-- **Mobile**: Update `API_URL` to point to new API port, verify app works.
+### Frontend ✅
+- Web app (`localhost:3000`) correctly calls API at `localhost:3001`
+- Mobile app correctly calls API at `192.168.1.40:3001` (local IP)
+- Authentication flow working
+- Image upload working with URL conversion for mobile
+
+## Next Steps
+
+See [UPDATED_FEEDBACK.md](../.gemini/antigravity/brain/UPDATED_FEEDBACK.md) for recommendations:
+1. **Database Migration**: SQLite → PostgreSQL
+2. **Cloud Storage**: Local files → S3/Cloudinary
+3. **Security**: Rate limiting, stronger passwords
+4. **Performance**: Pagination, caching
+5. **Production Deployment**

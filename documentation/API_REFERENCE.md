@@ -4,8 +4,9 @@ Complete reference for all API endpoints in the X-Clone application.
 
 ## Base URL
 
-- **Development**: `http://localhost:3000`
-- **Production**: Your deployed URL
+- **Development (Web)**: `http://localhost:3001` (NestJS API)
+- **Development (Mobile)**: `http://192.168.1.40:3001` (Use your computer's local IP)
+- **Production**: Your deployed API URL
 
 ## Authentication
 
@@ -114,7 +115,7 @@ Authenticate an existing user.
 
 Get the authenticated user's profile.
 
-**Endpoint**: `GET /api/me`
+**Endpoint**: `GET /auth/me`
 
 **Authentication**: Required
 
@@ -141,7 +142,7 @@ Get the authenticated user's profile.
 
 Get a user's public profile with stats.
 
-**Endpoint**: `GET /api/users/:id`
+**Endpoint**: `GET /users/:username`
 
 **Authentication**: Optional (affects `isFollowedByMe` field)
 
@@ -173,7 +174,7 @@ Get a user's public profile with stats.
 
 Update the current user's profile.
 
-**Endpoint**: `PATCH /api/profile`
+**Endpoint**: `PATCH /profile`
 
 **Authentication**: Required
 
@@ -215,7 +216,7 @@ Update the current user's profile.
 
 Toggle follow status for a user.
 
-**Endpoint**: `POST /api/users/:id/follow`
+**Endpoint**: `POST /users/:id/follow`
 
 **Authentication**: Required
 
@@ -241,7 +242,7 @@ Toggle follow status for a user.
 
 Get all posts for the home feed (non-replies only).
 
-**Endpoint**: `GET /api/posts`
+**Endpoint**: `GET /posts`
 
 **Authentication**: Optional (affects `isLikedByMe` field)
 
@@ -285,7 +286,7 @@ Get all posts for the home feed (non-replies only).
 
 Create a new post, reply, repost, or quote.
 
-**Endpoint**: `POST /api/posts`
+**Endpoint**: `POST /posts`
 
 **Authentication**: Required
 
@@ -334,7 +335,7 @@ Create a new post, reply, repost, or quote.
 
 Get a specific post with its thread (ancestors and replies).
 
-**Endpoint**: `GET /api/posts/:id`
+**Endpoint**: `GET /posts/:id`
 
 **Authentication**: Optional
 
@@ -384,7 +385,7 @@ Get a specific post with its thread (ancestors and replies).
 
 Toggle like status for a post.
 
-**Endpoint**: `POST /api/posts/:id/like`
+**Endpoint**: `POST /posts/:id/like`
 
 **Authentication**: Required
 
@@ -409,7 +410,7 @@ Toggle like status for a post.
 
 Get all notifications for the current user.
 
-**Endpoint**: `GET /api/notifications`
+**Endpoint**: `GET /notifications`
 
 **Authentication**: Required
 
@@ -454,7 +455,7 @@ Get all notifications for the current user.
 
 Mark a specific notification as read.
 
-**Endpoint**: `PATCH /api/notifications/:id`
+**Endpoint**: `PATCH /notifications/:id`
 
 **Authentication**: Required
 
@@ -485,7 +486,7 @@ Mark a specific notification as read.
 
 Upload an image file for posts or profiles.
 
-**Endpoint**: `POST /api/upload`
+**Endpoint**: `POST /upload`
 
 **Authentication**: Required
 
@@ -513,7 +514,7 @@ Upload an image file for posts or profiles.
 
 Search for users and posts by keyword.
 
-**Endpoint**: `GET /api/search`
+**Endpoint**: `GET /search`
 
 **Authentication**: Optional
 
