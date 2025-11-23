@@ -3,7 +3,8 @@ import { View, Text, ActivityIndicator, Image, TouchableOpacity, FlatList } from
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { API_URL } from '../../../constants';
+import { API_URL, getImageUrl } from '../../../constants';
+import { getToken } from '../../../lib/auth';
 
 export default function FollowsScreen() {
     const router = useRouter();
@@ -22,8 +23,7 @@ export default function FollowsScreen() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            // TODO: Get token
-            const token = null;
+            const token = await getToken();
             const headers: HeadersInit = {};
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -42,13 +42,38 @@ export default function FollowsScreen() {
     };
 
     const handleFollow = async (targetUserId: string, isFollowing: boolean) => {
+        const token = await getToken();
+        if (!token) {
+            router.push('/auth/signin');
+            return;
+        }
+
         // Optimistic update
         setUsers(prev => prev.map(u =>
             u.id === targetUserId ? { ...u, isFollowedByMe: !isFollowing } : u
         ));
 
-        // TODO: Implement API call with token
-        alert('Follow feature requires authentication implementation on mobile');
+        try {
+            const res = await fetch(`${API_URL}/users/${targetUserId}/follow`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to follow/unfollow');
+            }
+
+            // Refresh list to ensure consistency
+            await fetchUsers();
+        } catch (error) {
+            console.error('Follow error:', error);
+            // Revert optimistic update
+            setUsers(prev => prev.map(u =>
+                u.id === targetUserId ? { ...u, isFollowedByMe: isFollowing } : u
+            ));
+        }
     };
 
     return (
@@ -91,7 +116,7 @@ export default function FollowsScreen() {
                             <View className="flex-row items-center gap-3 flex-1">
                                 <View className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden justify-center items-center">
                                     {item.image ? (
-                                        <Image source={{ uri: item.image }} className="w-full h-full" />
+                                        <Image source={{ uri: getImageUrl(item.image)! }} className="w-full h-full" />
                                     ) : (
                                         <Text className="text-black dark:text-white font-bold">{item.username[0].toUpperCase()}</Text>
                                     )}

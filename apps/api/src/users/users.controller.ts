@@ -19,9 +19,11 @@ export class UsersController {
         return this.usersService.getSuggested(req.user.id);
     }
 
+    @UseGuards(OptionalAuthGuard)
     @Get('users/:username')
     async getUser(@Param('username') username: string, @Request() req: any) {
-        return this.usersService.findOne(username);
+        const currentUserId = req.user?.id;
+        return this.usersService.findOne(username, currentUserId);
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -54,5 +56,16 @@ export class UsersController {
         const type = (typeParam as 'posts' | 'replies' | 'likes') || 'posts';
         const currentUserId = req.user?.id;
         return this.usersService.getUserPosts(username, type, currentUserId);
+    }
+
+    @UseGuards(OptionalAuthGuard)
+    @Get('users/:username/follows')
+    async getFollows(
+        @Param('username') username: string,
+        @Query('type') type: 'followers' | 'following',
+        @Request() req: any,
+    ) {
+        const currentUserId = req.user?.id;
+        return this.usersService.getFollows(username, type, currentUserId);
     }
 }

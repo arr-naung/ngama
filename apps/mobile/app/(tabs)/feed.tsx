@@ -52,7 +52,7 @@ export default function Feed() {
             const token = await getToken();
             if (!token) return;
 
-            const res = await fetch(`${API_URL}/me`, {
+            const res = await fetch(`${API_URL}/auth/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

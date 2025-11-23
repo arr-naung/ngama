@@ -114,9 +114,39 @@ export default function ProfileScreen() {
     }, [username, activeTab]);
 
     const handleFollow = async () => {
-        // Placeholder for follow logic
-        // Needs token
-        alert('Follow feature requires authentication implementation on mobile');
+        const token = await getToken();
+        if (!token) {
+            router.push('/auth/signin');
+            return;
+        }
+
+        // Optimistic update
+        const previousIsFollowing = isFollowing;
+        const previousFollowersCount = followersCount;
+
+        setIsFollowing(!isFollowing);
+        setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
+
+        try {
+            const res = await fetch(`${API_URL}/users/${user.id}/follow`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to follow/unfollow');
+            }
+
+            // Refresh profile to ensure consistency
+            await fetchProfile();
+        } catch (error) {
+            console.error('Follow error:', error);
+            // Revert optimistic update
+            setIsFollowing(previousIsFollowing);
+            setFollowersCount(previousFollowersCount);
+        }
     };
 
     if (loading) {

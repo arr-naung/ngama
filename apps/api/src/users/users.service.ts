@@ -51,12 +51,12 @@ export class UsersService {
 
     return {
       ...user,
-      isFollowing: currentUserId ? user.followers.length > 0 : false,
+      isFollowedByMe: currentUserId ? user.followers.length > 0 : false,
     };
   }
 
   async getSuggested(currentUserId: string, limit: number = 5) {
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       where: {
         id: { not: currentUserId },
         followers: {
@@ -71,6 +71,72 @@ export class UsersService {
         image: true,
       },
     });
+
+    // Add isFollowedByMe field (always false since we filtered out followed users)
+    return users.map(user => ({
+      ...user,
+      isFollowedByMe: false,
+    }));
+  }
+
+  async getFollows(username: string, type: 'followers' | 'following', currentUserId?: string) {
+    // First find the user
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (type === 'followers') {
+      const followers = await this.prisma.follow.findMany({
+        where: { followingId: user.id },
+        include: {
+          follower: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+              followers: currentUserId ? {
+                where: { followerId: currentUserId },
+                select: { followerId: true }
+              } : false,
+            },
+          },
+        },
+      });
+
+      return followers.map(f => ({
+        ...f.follower,
+        isFollowedByMe: currentUserId ? f.follower.followers.length > 0 : false,
+      }));
+    } else {
+      const following = await this.prisma.follow.findMany({
+        where: { followerId: user.id },
+        include: {
+          following: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+              followers: currentUserId ? {
+                where: { followerId: currentUserId },
+                select: { followerId: true }
+              } : false,
+            },
+          },
+        },
+      });
+
+      return following.map(f => ({
+        ...f.following,
+        isFollowedByMe: currentUserId ? f.following.followers.length > 0 : false,
+      }));
+    }
   }
 
   async follow(targetUserId: string, currentUserId: string) {

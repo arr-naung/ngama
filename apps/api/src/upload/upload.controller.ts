@@ -23,10 +23,9 @@ export class UploadController {
         if (!file) {
             throw new BadRequestException('No file uploaded');
         }
-        // Return the absolute URL
-        // Note: In production, this should use an environment variable for the base URL
-        // For now, we assume the API is running on port 3001
-        const baseUrl = 'http://localhost:3001';
+        // Use environment variable for base URL, or construct from request
+        // For development, you can set UPLOAD_BASE_URL=http://192.168.1.40:3001
+        const baseUrl = process.env.UPLOAD_BASE_URL || 'http://localhost:3001';
         return { url: `${baseUrl}/uploads/${file.filename}` };
     }
 }

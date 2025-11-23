@@ -29,7 +29,7 @@ export default function ProfileScreen() {
                 return;
             }
 
-            const res = await fetch(`${API_URL}/me`, {
+            const res = await fetch(`${API_URL}/auth/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const text = await res.text();
