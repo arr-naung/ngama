@@ -21,6 +21,9 @@ export default function PostPage() {
     const [replyingTo, setReplyingTo] = useState<Post | null>(null);
     const [quotingPost, setQuotingPost] = useState<Post | null>(null);
     const [retweetMenuOpen, setRetweetMenuOpen] = useState<string | null>(null);
+    const [loadingMoreReplies, setLoadingMoreReplies] = useState(false);
+    const [repliesNextCursor, setRepliesNextCursor] = useState<string | null>(null);
+    const [repliesHasMore, setRepliesHasMore] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = () => setRetweetMenuOpen(null);
@@ -52,6 +55,12 @@ export default function PostPage() {
                 quotes: data._count?.quotes
             });
             setPost(data);
+
+            // Check if there might be more replies
+            if (data.replies && data.replies.length >= 20 && data._count.replies > 20) {
+                setRepliesNextCursor(data.replies[data.replies.length - 1].id);
+                setRepliesHasMore(true);
+            }
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -64,6 +73,36 @@ export default function PostPage() {
             fetchPost();
         }
     }, [postId]);
+
+    const loadMoreReplies = async () => {
+        if (!repliesNextCursor || loadingMoreReplies || !post) return;
+
+        setLoadingMoreReplies(true);
+        try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(`${API_URL}/posts/${postId}/replies?cursor=${repliesNextCursor}`, { headers });
+            if (!res.ok) throw new Error('Failed to load more replies');
+
+            const data = await res.json();
+            if (data.replies && Array.isArray(data.replies) && post.replies) {
+                setPost({
+                    ...post,
+                    replies: [...(post.replies || []), ...data.replies]
+                });
+                setRepliesNextCursor(data.nextCursor || null);
+                setRepliesHasMore(data.hasMore || false);
+            }
+        } catch (err) {
+            console.error('Failed to load more replies:', err);
+        } finally {
+            setLoadingMoreReplies(false);
+        }
+    };
 
     const handleLike = async (id: string, currentLiked: boolean, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
@@ -90,7 +129,7 @@ export default function PostPage() {
         } else {
             setPost({
                 ...post,
-                replies: post.replies.map(r => r.id === id ? toggleLike(r) : r)
+                replies: post.replies?.map(r => r.id === id ? toggleLike(r) : r) || []
             });
         }
 
@@ -122,10 +161,10 @@ export default function PostPage() {
 
         if (p.id === post?.id) {
             setPost(toggleRepost(post));
-        } else if (post?.replies.some(r => r.id === p.id)) {
+        } else if (post?.replies?.some(r => r.id === p.id)) {
             setPost({
                 ...post,
-                replies: post.replies.map(r => r.id === p.id ? toggleRepost(r) : r)
+                replies: post.replies?.map(r => r.id === p.id ? toggleRepost(r) : r) || []
             });
         }
 
@@ -420,7 +459,7 @@ export default function PostPage() {
             </div>
 
             {/* Replies */}
-            {post.replies.map((reply) => (
+            {post.replies?.map((reply) => (
                 <div key={reply.id} className="p-4 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/post/${reply.id}`)}>
                     <div className="flex gap-3">
                         <Link href={`/u/${reply.author.username}`} className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -555,6 +594,24 @@ export default function PostPage() {
                     </div>
                 </div>
             ))}
+
+            {/* Load More Replies*/}
+            {repliesHasMore && post && (
+                <button
+                    onClick={loadMoreReplies}
+                    disabled={loadingMoreReplies}
+                    className="w-full py-4 text-primary hover:bg-muted/50 transition-colors border-b border-border disabled:opacity-50"
+                >
+                    {loadingMoreReplies ? 'Loading...' : `Load more replies (${post._count.replies - post.replies.length} remaining)`}
+                </button>
+            )}
+
+            {!loading && !repliesHasMore && post && post.replies.length > 0 && (
+                <div className="text-center py-4 text-muted-foreground border-b border-border">
+                    End of replies
+                </div>
+            )}
+
 
             {replyingTo && (
                 <ReplyModal

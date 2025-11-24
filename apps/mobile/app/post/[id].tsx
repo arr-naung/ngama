@@ -18,6 +18,9 @@ export default function PostDetailsScreen() {
     const [replyContent, setReplyContent] = useState('');
     const [sendingReply, setSendingReply] = useState(false);
     const { colorScheme } = useColorScheme();
+    const [loadingMoreReplies, setLoadingMoreReplies] = useState(false);
+    const [repliesNextCursor, setRepliesNextCursor] = useState<string | null>(null);
+    const [repliesHasMore, setRepliesHasMore] = useState(false);
 
     // Interaction State
     const [repostModalVisible, setRepostModalVisible] = useState(false);
@@ -157,6 +160,12 @@ export default function PostDetailsScreen() {
             if (res.ok) {
                 const data = await res.json();
                 setPost(data);
+
+                // Check if there might be more replies
+                if (data.replies && data.replies.length >= 20 && data._count.replies > 20) {
+                    setRepliesNextCursor(data.replies[data.replies.length - 1].id);
+                    setRepliesHasMore(true);
+                }
             }
         } catch (error) {
             console.error(error);
@@ -168,6 +177,36 @@ export default function PostDetailsScreen() {
     useEffect(() => {
         fetchPost();
     }, [id]);
+
+    const loadMoreReplies = async () => {
+        if (!repliesNextCursor || loadingMoreReplies || !post) return;
+
+        setLoadingMoreReplies(true);
+        try {
+            const token = await getToken();
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(`${API_URL}/posts/${id}/replies?cursor=${repliesNextCursor}`, { headers });
+            if (!res.ok) throw new Error('Failed to load more replies');
+
+            const data = await res.json();
+            if (data.replies && Array.isArray(data.replies) && post.replies) {
+                setPost({
+                    ...post,
+                    replies: [...post.replies, ...data.replies]
+                });
+                setRepliesNextCursor(data.nextCursor || null);
+                setRepliesHasMore(data.hasMore || false);
+            }
+        } catch (err) {
+            console.error('Failed to load more replies:', err);
+        } finally {
+            setLoadingMoreReplies(false);
+        }
+    };
 
     const handleReply = async () => {
         if (!replyContent.trim()) return;
@@ -454,6 +493,19 @@ export default function PostDetailsScreen() {
                     keyExtractor={(item) => item.id}
                     ListHeaderComponent={renderHeader}
                     renderItem={({ item }) => renderPostItem(item)}
+                    onEndReached={loadMoreReplies}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                        loadingMoreReplies ? (
+                            <View className="py-4 items-center">
+                                <Text className="text-gray-500">Loading...</Text>
+                            </View>
+                        ) : !repliesHasMore && post.replies && post.replies.length > 0 ? (
+                            <View className="py-4 items-center">
+                                <Text className="text-gray-500">You've reached the end!</Text>
+                            </View>
+                        ) : null
+                    }
                 />
 
                 <View className="border-t border-gray-200 dark:border-gray-800 p-4 flex-row gap-4 items-center pb-8">

@@ -139,38 +139,56 @@ export class UsersService {
     }
   }
 
-  async follow(targetUserId: string, currentUserId: string) {
-    if (targetUserId === currentUserId) {
+  async toggleFollow(followerId: string, followingId: string) {
+    if (followerId === followingId) {
       throw new Error('Cannot follow yourself');
     }
 
     const existingFollow = await this.prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: currentUserId,
-          followingId: targetUserId,
-        },
-      },
+          followerId,
+          followingId
+        }
+      }
     });
 
     if (existingFollow) {
+      // Unfollow
       await this.prisma.follow.delete({
         where: {
           followerId_followingId: {
-            followerId: currentUserId,
-            followingId: targetUserId,
-          },
-        },
+            followerId,
+            followingId
+          }
+        }
+      });
+      // Delete the follow notification if it exists
+      await this.prisma.notification.deleteMany({
+        where: {
+          type: 'FOLLOW',
+          actorId: followerId,
+          userId: followingId
+        }
       });
       return { following: false };
     } else {
+      // Follow
       await this.prisma.follow.create({
         data: {
-          followerId: currentUserId,
-          followingId: targetUserId,
-        },
+          followerId,
+          followingId
+        }
       });
-      // TODO: Create notification
+
+      // Create notification for the person being followed
+      await this.prisma.notification.create({
+        data: {
+          type: 'FOLLOW',
+          userId: followingId,
+          actorId: followerId
+        }
+      });
       return { following: true };
     }
   }

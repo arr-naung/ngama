@@ -36,4 +36,16 @@ export class PostsController {
     async toggleLike(@Param('id') id: string, @Request() req: any) {
         return this.postsService.toggleLike(id, req.user.id);
     }
+
+    @UseGuards(OptionalAuthGuard)
+    @Get(':id/replies')
+    async getReplies(
+        @Param('id') id: string,
+        @Query('cursor') cursor?: string,
+        @Query('limit') limit?: string,
+        @Request() req?: any,
+    ) {
+        const currentUserId = req?.user?.id;
+        return this.postsService.getReplies(id, cursor, limit ? parseInt(limit) : undefined, currentUserId);
+    }
 }

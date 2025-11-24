@@ -6,7 +6,7 @@ export class PostsService {
     constructor(private prisma: PrismaService) { }
 
     async create(data: any, userId: string) {
-        return this.prisma.post.create({
+        const post = await this.prisma.post.create({
             data: {
                 ...data,
                 authorId: userId,
@@ -21,6 +21,59 @@ export class PostsService {
                 },
             },
         });
+
+        // Create notification for reply, repost, or quote
+        if (data.parentId) {
+            // This is a reply
+            const parentPost = await this.prisma.post.findUnique({
+                where: { id: data.parentId },
+                select: { authorId: true }
+            });
+            if (parentPost && parentPost.authorId !== userId) {
+                await this.prisma.notification.create({
+                    data: {
+                        type: 'REPLY',
+                        userId: parentPost.authorId,
+                        actorId: userId,
+                        postId: post.id
+                    }
+                });
+            }
+        } else if (data.repostId) {
+            // This is a repost
+            const originalPost = await this.prisma.post.findUnique({
+                where: { id: data.repostId },
+                select: { authorId: true }
+            });
+            if (originalPost && originalPost.authorId !== userId) {
+                await this.prisma.notification.create({
+                    data: {
+                        type: 'REPOST',
+                        userId: originalPost.authorId,
+                        actorId: userId,
+                        postId: post.id
+                    }
+                });
+            }
+        } else if (data.quoteId) {
+            // This is a quote
+            const quotedPost = await this.prisma.post.findUnique({
+                where: { id: data.quoteId },
+                select: { authorId: true }
+            });
+            if (quotedPost && quotedPost.authorId !== userId) {
+                await this.prisma.notification.create({
+                    data: {
+                        type: 'QUOTE',
+                        userId: quotedPost.authorId,
+                        actorId: userId,
+                        postId: post.id
+                    }
+                });
+            }
+        }
+
+        return post;
     }
 
     async findAll(cursor?: string, limit: number = 20, currentUserId?: string) {
@@ -175,8 +228,9 @@ export class PostsService {
 
         if (!post) return null;
 
-        // Fetch replies
+        // Fetch replies (first 20 for performance, use /posts/:id/replies for pagination)
         const replies = await this.prisma.post.findMany({
+            take: 20,
             where: { parentId: id },
             include: {
                 author: {
@@ -420,6 +474,7 @@ export class PostsService {
         });
 
         if (existingLike) {
+            // Unlike: delete like and notification
             await this.prisma.like.delete({
                 where: {
                     userId_postId: {
@@ -428,15 +483,128 @@ export class PostsService {
                     }
                 }
             });
+            // Delete the notification if it exists
+            await this.prisma.notification.deleteMany({
+                where: {
+                    type: 'LIKE',
+                    actorId: userId,
+                    postId: postId
+                }
+            });
             return { liked: false };
         } else {
+            // Like: create like
             await this.prisma.like.create({
                 data: {
                     userId,
                     postId
                 }
             });
+
+            // Create notification for the post author (if not self)
+            const post = await this.prisma.post.findUnique({
+                where: { id: postId },
+                select: { authorId: true }
+            });
+            if (post && post.authorId !== userId) {
+                await this.prisma.notification.create({
+                    data: {
+                        type: 'LIKE',
+                        userId: post.authorId,
+                        actorId: userId,
+                        postId: postId
+                    }
+                });
+            }
             return { liked: true };
         }
+    }
+
+    // Get paginated replies for a post
+    async getReplies(postId: string, cursor?: string, limit: number = 20, currentUserId?: string) {
+        const validLimit = Math.min(Math.max(limit, 1), 50);
+
+        const replies = await this.prisma.post.findMany({
+            take: validLimit + 1,
+            cursor: cursor ? { id: cursor } : undefined,
+            skip: cursor ? 1 : 0,
+            where: { parentId: postId },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                        name: true,
+                        image: true,
+                    },
+                },
+                _count: {
+                    select: { likes: true, replies: true, reposts: true, quotes: true },
+                },
+                repost: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true,
+                            },
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true },
+                        },
+                        quote: {
+                            include: {
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        name: true,
+                                        image: true,
+                                    },
+                                },
+                                _count: {
+                                    select: { likes: true, replies: true, reposts: true, quotes: true },
+                                },
+                            },
+                        },
+                    },
+                },
+                quote: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true,
+                            },
+                        },
+                        _count: {
+                            select: { likes: true, replies: true, reposts: true, quotes: true },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+
+        const hasMore = replies.length > validLimit;
+        const repliesToReturn = hasMore ? replies.slice(0, validLimit) : replies;
+        const nextCursor = hasMore ? repliesToReturn[repliesToReturn.length - 1].id : null;
+
+        let repliesWithStatus;
+        if (currentUserId) {
+            repliesWithStatus = await this.addLikeStatus(repliesToReturn, currentUserId);
+        } else {
+            repliesWithStatus = await this.addLikeStatus(repliesToReturn);
+        }
+
+        return {
+            replies: repliesWithStatus,
+            nextCursor,
+            hasMore,
+        };
     }
 }

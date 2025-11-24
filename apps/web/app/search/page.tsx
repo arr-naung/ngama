@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { SearchIcon } from '@/components/icons';
+import { SearchIcon, ReplyIcon, HeartIcon } from '@/components/icons';
 import { API_URL } from '@/lib/api';
 
 interface SearchResults {
@@ -18,6 +18,7 @@ interface SearchResults {
         id: string;
         content: string;
         createdAt: string;
+        isLiked?: boolean;
         author: {
             username: string;
             name: string | null;
@@ -25,6 +26,10 @@ interface SearchResults {
         };
         _count: { likes: number; replies: number };
     }>;
+    usersNextCursor?: string | null;
+    postsNextCursor?: string | null;
+    usersHasMore?: boolean;
+    postsHasMore?: boolean;
 }
 
 export default function SearchPage() {
@@ -34,24 +39,94 @@ export default function SearchPage() {
     const [query, setQuery] = useState(initialQuery);
     const [results, setResults] = useState<SearchResults>({ users: [], posts: [] });
     const [loading, setLoading] = useState(false);
+    const [loadingMoreUsers, setLoadingMoreUsers] = useState(false);
+    const [loadingMorePosts, setLoadingMorePosts] = useState(false);
+    const [usersNextCursor, setUsersNextCursor] = useState<string | null>(null);
+    const [postsNextCursor, setPostsNextCursor] = useState<string | null>(null);
+    const [usersHasMore, setUsersHasMore] = useState(false);
+    const [postsHasMore, setPostsHasMore] = useState(false);
 
     const handleSearch = async (searchQuery: string) => {
         if (!searchQuery.trim()) {
             setResults({ users: [], posts: [] });
+            setUsersNextCursor(null);
+            setPostsNextCursor(null);
+            setUsersHasMore(false);
+            setPostsHasMore(false);
             return;
         }
 
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(searchQuery)}`);
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(searchQuery)}`, { headers });
             if (res.ok) {
                 const data = await res.json();
-                setResults(data);
+                setResults({ users: data.users || [], posts: data.posts || [] });
+                setUsersNextCursor(data.usersNextCursor || null);
+                setPostsNextCursor(data.postsNextCursor || null);
+                setUsersHasMore(data.usersHasMore || false);
+                setPostsHasMore(data.postsHasMore || false);
             }
         } catch (error) {
             console.error('Search failed', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadMoreUsers = async () => {
+        if (!usersNextCursor || loadingMoreUsers || !query) return;
+
+        setLoadingMoreUsers(true);
+        try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}&usersCursor=${usersNextCursor}`, { headers });
+            if (res.ok) {
+                const data = await res.json();
+                setResults(prev => ({ ...prev, users: [...prev.users, ...(data.users || [])] }));
+                setUsersNextCursor(data.usersNextCursor || null);
+                setUsersHasMore(data.usersHasMore || false);
+            }
+        } catch (error) {
+            console.error('Load more users failed', error);
+        } finally {
+            setLoadingMoreUsers(false);
+        }
+    };
+
+    const loadMorePosts = async () => {
+        if (!postsNextCursor || loadingMorePosts || !query) return;
+
+        setLoadingMorePosts(true);
+        try {
+            const token = localStorage.getItem('token');
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}&postsCursor=${postsNextCursor}`, { headers });
+            if (res.ok) {
+                const data = await res.json();
+                setResults(prev => ({ ...prev, posts: [...prev.posts, ...(data.posts || [])] }));
+                setPostsNextCursor(data.postsNextCursor || null);
+                setPostsHasMore(data.postsHasMore || false);
+            }
+        } catch (error) {
+            console.error('Load more posts failed', error);
+        } finally {
+            setLoadingMorePosts(false);
         }
     };
 
@@ -101,7 +176,7 @@ export default function SearchPage() {
                     <div>
                         <h2 className="px-4 py-3 font-bold text-xl border-b border-border">People</h2>
                         {results.users.map(user => (
-                            <Link key={user.id} href={`/u/${user.username}`} className="block p-4 hover:bg-muted/50 transition">
+                            <Link key={user.id} href={`/u/${user.username}`} className="block p-4 hover:bg-muted/50 transition border-b border-border">
                                 <div className="flex gap-3 items-center">
                                     <div className="h-12 w-12 rounded-full bg-muted overflow-hidden">
                                         {user.image ? (
@@ -116,6 +191,17 @@ export default function SearchPage() {
                                 </div>
                             </Link>
                         ))}
+
+                        {/* Load More Users Button */}
+                        {usersHasMore && (
+                            <button
+                                onClick={loadMoreUsers}
+                                disabled={loadingMoreUsers}
+                                className="w-full py-3 text-primary hover:bg-muted/50 transition border-b border-border disabled:opacity-50"
+                            >
+                                {loadingMoreUsers ? 'Loading...' : 'Load more people'}
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -142,14 +228,34 @@ export default function SearchPage() {
                                             <span className="text-muted-foreground">· {new Date(post.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         <div className="mt-1 text-foreground">{post.content}</div>
-                                        <div className="mt-2 flex gap-6 text-muted-foreground text-sm">
-                                            <span>💬 {post._count.replies}</span>
-                                            <span>❤️ {post._count.likes}</span>
+                                        <div className="mt-2 flex gap-6 text-muted-foreground text-sm items-center">
+                                            <span className="flex items-center gap-1">
+                                                <ReplyIcon className="w-4 h-4" />
+                                                {post._count.replies}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <HeartIcon
+                                                    filled={post.isLiked}
+                                                    className={post.isLiked ? 'w-4 h-4 text-pink-500' : 'w-4 h-4'}
+                                                />
+                                                <span className={post.isLiked ? 'text-pink-500' : ''}>{post._count.likes}</span>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         ))}
+
+                        {/* Load More Posts Button */}
+                        {postsHasMore && (
+                            <button
+                                onClick={loadMorePosts}
+                                disabled={loadingMorePosts}
+                                className="w-full py-3 text-primary hover:bg-muted/50 transition border-b border-border disabled:opacity-50"
+                            >
+                                {loadingMorePosts ? 'Loading...' : 'Load more posts'}
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

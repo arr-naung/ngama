@@ -37,7 +37,7 @@ export class UsersController {
     @UseGuards(AuthGuard('jwt'))
     @Post('users/:id/follow')
     async follow(@Param('id') id: string, @Request() req: any) {
-        return this.usersService.follow(id, req.user.id);
+        return this.usersService.toggleFollow(req.user.id, id);
     }
 
     @UseGuards(AuthGuard('jwt'))
