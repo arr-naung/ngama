@@ -33,25 +33,6 @@ We have successfully built a **solid full-stack foundation** that mimics the cor
 ### Can we handle 1M users with this architecture?
 **YES.** A well-tuned **Modular Monolith** (NestJS) backed by **PostgreSQL** and **Redis** can easily handle 1M users. You do **not** need microservices yet.
 
----
-
-## 🗺️ Roadmap: What To Do Next
-
-To reach the 1M user goal, we need to move from "Development Mode" to "Production Scale". Here is the focused plan:
-
-### Phase 1: The Data Foundation (Critical) ⚠️
-*Current SQLite database will crash under load.*
-
-1.  **Migrate to PostgreSQL**:
-    *   **Why**: SQLite is single-file and locks on writes. Postgres handles concurrent users.
-    *   **Action**: Update Prisma to use PostgreSQL. Run migrations.
-2.  **Cloud Object Storage (S3/Cloudinary)**:
-    *   **Why**: Storing images locally (`./uploads`) doesn't scale and breaks on multiple servers.
-    *   **Action**: Update `UploadController` to push files to AWS S3 or Cloudinary.
-
-### Phase 2: Performance & Scale (Essential) ⚡
-*1M users generate a lot of data. We need to read it fast.*
-
 3.  **Implement Pagination**:
     *   **Why**: Currently, we load ALL posts. This will crash the server with 10k posts.
     *   **Action**: Update `findAll` endpoints to use cursor-based pagination (load 20 at a time).
@@ -92,7 +73,7 @@ graph TD
 | Feature | Current Status | Target (1M Users) | Complexity |
 | :--- | :--- | :--- | :--- |
 | **Backend** | NestJS (Local) | NestJS (Clustered) | Medium |
-| **Database** | SQLite | PostgreSQL | Medium |
+| **Database** | ✅ PostgreSQL | PostgreSQL | High (Complete) |
 | **Storage** | Local Disk | AWS S3 / Cloudinary | Low |
 | **Caching** | None | Redis | Medium |
 | **Feed** | Load All | Cursor Pagination | Low |

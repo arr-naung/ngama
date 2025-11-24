@@ -19,6 +19,9 @@ export default function ProfileScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
     const [followersCount, setFollowersCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
@@ -69,7 +72,12 @@ export default function ProfileScreen() {
         }
     };
 
-    const fetchPosts = async () => {
+    const fetchPosts = async (cursor?: string) => {
+        const isLoadingMore = !!cursor;
+        if (isLoadingMore) {
+            setLoadingMore(true);
+        }
+
         try {
             const token = await getToken();
             const headers: HeadersInit = {};
@@ -77,23 +85,42 @@ export default function ProfileScreen() {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const res = await fetch(`${API_URL}/users/${username}/posts?type=${activeTab}`, { headers });
-            const text = await res.text();
-            console.log(`[fetchPosts] Status: ${res.status}, URL: ${API_URL}/users/${username}/posts?type=${activeTab}`);
+            const url = cursor
+                ? `${API_URL}/users/${username}/posts?type=${activeTab}&cursor=${cursor}`
+                : `${API_URL}/users/${username}/posts?type=${activeTab}`;
 
-            try {
-                const data = JSON.parse(text);
-                if (res.ok) {
+            const res = await fetch(url, { headers });
+            const data = await res.json();
+
+            if (res.ok) {
+                // Handle paginated response format
+                if (data.posts && Array.isArray(data.posts)) {
+                    if (isLoadingMore) {
+                        setPosts(prev => [...prev, ...data.posts]);
+                    } else {
+                        setPosts(data.posts);
+                    }
+                    setNextCursor(data.nextCursor || null);
+                    setHasMore(data.hasMore || false);
+                } else if (Array.isArray(data)) {
+                    // Fallback for old format
                     setPosts(data);
-                } else {
-                    console.error('[fetchPosts] API Error:', data);
+                    setNextCursor(null);
+                    setHasMore(false);
                 }
-            } catch (e) {
-                console.error('[fetchPosts] JSON Parse Error:', e);
-                console.error('[fetchPosts] Response Text:', text.substring(0, 500));
+            } else {
+                console.error('[fetchPosts] API Error:', data);
             }
         } catch (error) {
             console.error('[fetchPosts] Network/System Error:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
+    const loadMore = () => {
+        if (nextCursor && !loadingMore && hasMore) {
+            fetchPosts(nextCursor);
         }
     };
 
@@ -110,6 +137,10 @@ export default function ProfileScreen() {
     };
 
     useEffect(() => {
+        // Reset pagination when tab changes
+        setPosts([]);
+        setNextCursor(null);
+        setHasMore(false);
         loadData();
     }, [username, activeTab]);
 
@@ -383,6 +414,19 @@ export default function ProfileScreen() {
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={renderHeader()}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorScheme === 'dark' ? 'white' : 'black'} />}
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loadingMore ? (
+                        <View className="py-4 items-center">
+                            <Text className="text-gray-500">Loading...</Text>
+                        </View>
+                    ) : !hasMore && posts.length > 0 ? (
+                        <View className="py-4 items-center">
+                            <Text className="text-gray-500">You've reached the end!</Text>
+                        </View>
+                    ) : null
+                }
                 renderItem={({ item }) => (
                     <PostCard
                         post={item}

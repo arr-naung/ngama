@@ -182,16 +182,21 @@ export class UsersService {
     });
   }
 
-  async getUserPosts(username: string, type: 'posts' | 'replies' | 'likes' = 'posts', currentUserId?: string) {
+  async getUserPosts(username: string, type: 'posts' | 'replies' | 'likes' = 'posts', currentUserId?: string, cursor?: string, limit: number = 20) {
+    const validLimit = Math.min(Math.max(limit, 1), 50);
+
     const user = await this.prisma.user.findUnique({
       where: { username },
       select: { id: true },
     });
 
-    if (!user) return [];
+    if (!user) return { posts: [], nextCursor: null, hasMore: false };
 
     if (type === 'likes') {
       const likes = await this.prisma.like.findMany({
+        take: validLimit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
         where: { userId: user.id },
         include: {
           post: {
@@ -230,12 +235,22 @@ export class UsersService {
         orderBy: { createdAt: 'desc' },
       });
 
-      return likes.map(like => ({
+      const hasMore = likes.length > validLimit;
+      const likesToReturn = hasMore ? likes.slice(0, validLimit) : likes;
+      const nextCursor = hasMore ? likesToReturn[likesToReturn.length - 1].id : null;
+
+      const posts = likesToReturn.map(like => ({
         ...like.post,
         isLikedByMe: true, // They liked it, so it's true
         isRepostedByMe: false,
         isQuotedByMe: false,
       }));
+
+      return {
+        posts,
+        nextCursor,
+        hasMore,
+      };
     }
 
     const where = type === 'replies'
@@ -243,6 +258,9 @@ export class UsersService {
       : { authorId: user.id, parentId: null };
 
     const posts = await this.prisma.post.findMany({
+      take: validLimit + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0,
       where,
       include: {
         author: {
@@ -310,11 +328,22 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
+    const hasMore = posts.length > validLimit;
+    const postsToReturn = hasMore ? posts.slice(0, validLimit) : posts;
+    const nextCursor = hasMore ? postsToReturn[postsToReturn.length - 1].id : null;
+
     // Check like/repost status if user is authenticated
+    let postsWithStatus;
     if (currentUserId) {
-      return this.postsService.addLikeStatus(posts, currentUserId);
+      postsWithStatus = await this.postsService.addLikeStatus(postsToReturn, currentUserId);
     } else {
-      return this.postsService.addLikeStatus(posts);
+      postsWithStatus = await this.postsService.addLikeStatus(postsToReturn);
     }
+
+    return {
+      posts: postsWithStatus,
+      nextCursor,
+      hasMore,
+    };
   }
 }

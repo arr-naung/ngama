@@ -16,6 +16,9 @@ export default function ProfileScreen() {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(false);
     const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'likes'>('posts');
     const { colorScheme } = useColorScheme();
     const [repostModalVisible, setRepostModalVisible] = useState(false);
@@ -80,24 +83,63 @@ export default function ProfileScreen() {
 
     useEffect(() => {
         if (user?.username) {
+            // Reset pagination state when tab changes
+            setPosts([]);
+            setNextCursor(null);
+            setHasMore(false);
             fetchUserPosts(user.username);
         }
     }, [user, activeTab]);
 
-    const fetchUserPosts = async (username: string) => {
+    const fetchUserPosts = async (username: string, cursor?: string) => {
+        const isLoadingMore = !!cursor;
+        if (isLoadingMore) {
+            setLoadingMore(true);
+        }
+
         try {
             const token = await getToken();
             if (!token) return;
 
-            const res = await fetch(`${API_URL}/users/${username}/posts?type=${activeTab}`, {
+            const url = cursor
+                ? `${API_URL}/users/${username}/posts?type=${activeTab}&cursor=${cursor}`
+                : `${API_URL}/users/${username}/posts?type=${activeTab}`;
+
+            const res = await fetch(url, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
+            console.log('[Profile] Fetched user posts:', { username, type: activeTab, postsCount: data.posts?.length || data.length, hasMore: data.hasMore });
+
             if (res.ok) {
-                setPosts(data);
+                if (data.posts && Array.isArray(data.posts)) {
+                    // Paginated response
+                    if (isLoadingMore) {
+                        setPosts(prev => [...prev, ...data.posts]);
+                    } else {
+                        setPosts(data.posts);
+                    }
+                    setNextCursor(data.nextCursor || null);
+                    setHasMore(data.hasMore || false);
+                } else if (Array.isArray(data)) {
+                    // Fallback
+                    setPosts(data);
+                    setNextCursor(null);
+                    setHasMore(false);
+                }
+            } else {
+                console.error('[Profile] Failed to fetch posts:', data);
             }
         } catch (error) {
-            console.error(error);
+            console.error('[Profile] Error fetching posts:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
+    const loadMore = () => {
+        if (nextCursor && !loadingMore && hasMore && user?.username) {
+            fetchUserPosts(user.username, nextCursor);
         }
     };
 
@@ -310,6 +352,11 @@ export default function ProfileScreen() {
                     <Text className={`font-bold text-base ${activeTab === 'likes' ? 'text-black dark:text-white' : 'text-gray-500'}`}>Likes</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Debug info - TEMPORARY */}
+            <View className="p-2 bg-yellow-100">
+                <Text className="text-black text-xs">Posts: {posts.length} | Tab: {activeTab}</Text>
+            </View>
         </>
     );
 
@@ -320,6 +367,19 @@ export default function ProfileScreen() {
                 keyExtractor={(item) => item.id}
                 ListHeaderComponent={renderHeader()}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorScheme === 'dark' ? 'white' : 'black'} />}
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loadingMore ? (
+                        <View className="py-4 items-center">
+                            <Text className="text-gray-500">Loading...</Text>
+                        </View>
+                    ) : !hasMore && posts.length > 0 ? (
+                        <View className="py-4 items-center">
+                            <Text className="text-gray-500">You've reached the end!</Text>
+                        </View>
+                    ) : null
+                }
                 renderItem={({ item }) => (
                     <PostCard
                         post={item}

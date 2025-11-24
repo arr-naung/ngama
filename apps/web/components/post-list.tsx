@@ -10,6 +10,9 @@ import { API_URL } from '@/lib/api';
 export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: string }) {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(false);
     const router = useRouter();
 
     const [replyingTo, setReplyingTo] = useState<Post | null>(null);
@@ -25,7 +28,14 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
         return () => document.removeEventListener('click', handleClickOutside);
     }, [apiUrl]);
 
-    const fetchPosts = async () => {
+    const fetchPosts = async (cursor?: string) => {
+        const isLoadingMore = !!cursor;
+        if (isLoadingMore) {
+            setLoadingMore(true);
+        } else {
+            setLoading(true);
+        }
+
         try {
             const token = localStorage.getItem('token');
             const headers: HeadersInit = {};
@@ -33,26 +43,40 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const res = await fetch(apiUrl, { headers });
+            const url = cursor ? `${apiUrl}${apiUrl.includes('?') ? '&' : '?'}cursor=${cursor}` : apiUrl;
+            const res = await fetch(url, { headers });
             const data = await res.json();
-            console.log('[PostList] Fetched data:', data);
 
             // Handle new pagination format  
             if (data.posts && Array.isArray(data.posts)) {
-                console.log('[PostList] Received posts with pagination:', data.posts.length, 'First post:', data.posts[0]);
-                setPosts(data.posts);
+                if (isLoadingMore) {
+                    setPosts(prev => [...prev, ...data.posts]);
+                } else {
+                    setPosts(data.posts);
+                }
+                setNextCursor(data.nextCursor || null);
+                setHasMore(data.hasMore || false);
             } else if (Array.isArray(data)) {
-                // Fallback for old format (backward compatible)
-                console.log('[PostList] Received posts (old format):', data.length, 'First post:', data[0]);
+                // Fallback for old format
                 setPosts(data);
+                setNextCursor(null);
+                setHasMore(false);
             } else {
-                console.error('[PostList] Unexpected data format:', data);
                 setPosts([]);
+                setNextCursor(null);
+                setHasMore(false);
             }
         } catch (error) {
             console.error('Failed to fetch posts', error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const loadMore = () => {
+        if (nextCursor && !loadingMore) {
+            fetchPosts(nextCursor);
         }
     };
 
@@ -178,6 +202,22 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                         }}
                     />
                 ))}
+
+                {!loading && hasMore && (
+                    <button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                        className="w-full py-4 text-primary hover:bg-muted/50 transition-colors border-b border-border disabled:opacity-50"
+                    >
+                        {loadingMore ? 'Loading...' : 'Load More'}
+                    </button>
+                )}
+
+                {!loading && !hasMore && posts.length > 0 && (
+                    <div className="text-center py-4 text-muted-foreground border-b border-border">
+                        You've reached the end!
+                    </div>
+                )}
             </div>
 
             {replyingTo && (

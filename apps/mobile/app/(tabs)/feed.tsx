@@ -38,6 +38,9 @@ export default function Feed() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(false);
 
     // Interaction State
     const [repostModalVisible, setRepostModalVisible] = useState(false);
@@ -65,37 +68,51 @@ export default function Feed() {
         }
     };
 
-    const fetchPosts = async () => {
+    const fetchPosts = async (cursor?: string) => {
+        const isLoadingMore = !!cursor;
+        if (isLoadingMore) {
+            setLoadingMore(true);
+        } else {
+            setLoading(true);
+        }
+
         try {
             const token = await getToken();
             const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-            const res = await fetch(`${API_URL}/posts`, { headers });
-            const text = await res.text();
-            console.log(`[Feed] Status: ${res.status}, URL: ${API_URL}/posts`);
+            const url = cursor ? `${API_URL}/posts?cursor=${cursor}` : `${API_URL}/posts`;
+            const res = await fetch(url, { headers });
+            const data = await res.json();
 
-            try {
-                const data = JSON.parse(text);
-                if (res.ok) {
-                    // Handle new pagination format: {posts, nextCursor, hasMore}
-                    if (data.posts && Array.isArray(data.posts)) {
+            if (res.ok) {
+                // Handle pagination format: {posts, nextCursor, hasMore}
+                if (data.posts && Array.isArray(data.posts)) {
+                    if (isLoadingMore) {
+                        setPosts(prev => [...prev, ...data.posts]);
+                    } else {
                         setPosts(data.posts);
-                    } else if (Array.isArray(data)) {
-                        // Fallback for old format (backward compatible)
-                        setPosts(data);
                     }
-                } else {
-                    console.error('[Feed] API Error:', data);
+                    setNextCursor(data.nextCursor || null);
+                    setHasMore(data.hasMore || false);
+                } else if (Array.isArray(data)) {
+                    // Fallback for old format
+                    setPosts(data);
+                    setNextCursor(null);
+                    setHasMore(false);
                 }
-            } catch (e) {
-                console.error('[Feed] JSON Parse Error:', e);
-                console.error('[Feed] Response Text:', text.substring(0, 500));
             }
         } catch (error) {
-            console.error('[Feed] Network/System Error:', error);
+            console.error('[Feed] Error:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const loadMore = () => {
+        if (nextCursor && !loadingMore && hasMore) {
+            fetchPosts(nextCursor);
         }
     };
 
@@ -274,6 +291,19 @@ export default function Feed() {
                 keyExtractor={(item) => item.id}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={useColorScheme().colorScheme === 'dark' ? 'white' : 'black'} />
+                }
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loadingMore ? (
+                        <View className="py-4 items-center">
+                            <Text className="text-gray-500">Loading...</Text>
+                        </View>
+                    ) : !hasMore && posts.length > 0 ? (
+                        <View className="py-4 items-center">
+                            <Text className="text-gray-500">You've reached the end!</Text>
+                        </View>
+                    ) : null
                 }
             />
 

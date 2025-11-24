@@ -51,11 +51,13 @@ export class UsersController {
     async getUserPosts(
         @Param('username') username: string,
         @Query('type') typeParam: string,
-        @Request() req: any,
+        @Query('cursor') cursor?: string,
+        @Query('limit') limit?: string,
+        @Request() req?,
     ) {
         const type = (typeParam as 'posts' | 'replies' | 'likes') || 'posts';
         const currentUserId = req.user?.id;
-        return this.usersService.getUserPosts(username, type, currentUserId);
+        return this.usersService.getUserPosts(username, type, currentUserId, cursor, limit ? parseInt(limit) : undefined);
     }
 
     @UseGuards(OptionalAuthGuard)

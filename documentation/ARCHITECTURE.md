@@ -16,7 +16,7 @@ graph TB
     end
     
     subgraph "Data Layer"
-        DB[(SQLite Database<br/>via Prisma)]
+        DB[(PostgreSQL Database<br/>via Prisma)]
     end
     
     subgraph "Shared Packages"
@@ -65,9 +65,10 @@ graph TB
 
 ### Database
 
-- **Database**: SQLite
+- **Database**: PostgreSQL 16
 - **ORM**: Prisma
 - **Migration**: Prisma Migrate
+- **Features**: ACID compliance, concurrent connections, production-ready
 
 ### Monorepo
 
@@ -359,14 +360,16 @@ export async function GET(request: Request) {
 
 ### Current Limitations
 
-> [!CAUTION]
-> The current architecture is **not production-ready** for high scale.
+> [!NOTE]
+> PostgreSQL migration complete! Database now production-ready.
 
-1. **SQLite**: Single-file database, no horizontal scaling
-2. **No Caching**: Every request hits the database
-3. **No Pagination**: Feed loads ALL posts
-4. **Synchronous Notifications**: Blocks API responses
-5. **No Rate Limiting**: Vulnerable to abuse
+**Remaining scalability needs:**
+
+1. **No Caching**: Every request hits the database (need Redis)
+2. **No Pagination**: Feed loads ALL posts
+3. **Synchronous Notifications**: Blocks API responses (need message queue)
+4. **No Rate Limiting**: Vulnerable to abuse
+5. **Local File Storage**: Need S3/CDN for images
 
 ### Recommended Architecture for Scale
 
@@ -466,10 +469,11 @@ See [PROJECT_FEEDBACK.md](./PROJECT_FEEDBACK.md) for detailed security concerns:
 
 ### Current Setup (Development)
 
-- Single SQLite file
-- Next.js dev server (port 3000)
+- PostgreSQL database (localhost)
+- NestJS API server (port 3001)
+- Next.js web app (port 3000)
 - Expo dev server (mobile)
-- Local file uploads
+- Local file uploads with Sharp optimization
 
 ### Recommended Production Setup
 

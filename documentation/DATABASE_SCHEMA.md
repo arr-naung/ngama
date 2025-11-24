@@ -1,18 +1,3 @@
-# Database Schema Documentation
-
-Complete reference for the X-Clone database schema using Prisma ORM with SQLite.
-
-## Overview
-
-The database uses **SQLite** with **Prisma ORM** for type-safe database access. The schema is defined in [packages/db/prisma/schema.prisma](file:///c:/Users/netst/Desktop/Antigravity/packages/db/prisma/schema.prisma).
-
-> [!WARNING]
-> SQLite is suitable for development but **not recommended for production** at scale. See [PROJECT_FEEDBACK.md](./PROJECT_FEEDBACK.md) for migration recommendations to PostgreSQL.
-
----
-
-## Entity-Relationship Diagram
-
 ```mermaid
 erDiagram
     User ||--o{ Post : creates

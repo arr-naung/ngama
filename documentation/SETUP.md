@@ -32,14 +32,14 @@ This will install dependencies for all packages in the monorepo.
 Create `apps/web/.env`:
 
 ```env
-# Database
-DATABASE_URL="file:../../packages/db/dev.db"
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/xclone"
 
 # JWT Secret (change in production!)
 JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 
 # API URL for client-side
-NEXT_PUBLIC_API_URL="http://localhost:3000"
+NEXT_PUBLIC_API_URL="http://localhost:3001"
 ```
 
 #### Mobile Application
@@ -53,25 +53,67 @@ EXPO_PUBLIC_API_URL="http://localhost:3000"
 # EXPO_PUBLIC_API_URL="http://192.168.1.x:3000"
 ```
 
-#### Database
+#### API Server
 
-Create `packages/db/.env`:
+Create `apps/api/.env`:
 
 ```env
-DATABASE_URL="file:./dev.db"
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/xclone"
+
+# JWT Secret (must match web app!)
+JWT_SECRET="your-super-secret-jwt-key-change-in-production"
+
+# Upload base URL for mobile access
+UPLOAD_BASE_URL="http://192.168.1.x:3001"
 ```
 
-### 4. Initialize the Database
+### 4. Set Up PostgreSQL Database
+
+#### Install PostgreSQL
+
+**Windows:**
+```bash
+# Download from https://www.postgresql.org/download/windows/
+# Or use Chocolatey:
+choco install postgresql
+```
+
+**macOS:**
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+**Linux:**
+```bash
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+#### Create Database
 
 ```bash
-cd packages/db
-npx prisma migrate dev --name init
+# Create database
+createdb xclone
+
+# Or using psql:
+psql -U postgres
+CREATE DATABASE xclone;
+\q
+```
+
+#### Run Migrations
+
+```bash
+cd apps/api
+npx prisma migrate dev
 npx prisma generate
 cd ../..
 ```
 
 This will:
-- Create the SQLite database file
+- Connect to PostgreSQL database
 - Run migrations to create tables
 - Generate Prisma Client
 
@@ -83,8 +125,9 @@ From the root directory:
 npm run dev
 ```
 
-This starts both:
-- **Web app**: http://localhost:3000
+This starts:
+- **API server**: http://localhost:3001 (NestJS)
+- **Web app**: http://localhost:3000 (Next.js)
 - **Mobile app**: Expo development server
 
 Alternatively, run them separately:
@@ -132,13 +175,19 @@ If port 3000 is already in use:
 "dev": "next dev --port 3001"
 ```
 
-### Database Lock Errors
+### Database Connection Errors
 
-SQLite can have concurrency issues. If you encounter "database is locked" errors:
+If you encounter PostgreSQL connection errors:
 
-1. Stop all running servers
-2. Delete `packages/db/dev.db`
-3. Re-run migrations: `cd packages/db && npx prisma migrate dev`
+1. Ensure PostgreSQL is running: `pg_isready`
+2. Check your DATABASE_URL in `apps/api/.env`
+3. Verify database exists: `psql -U postgres -l`
+4. Reset migrations if needed:
+   ```bash
+   cd apps/api
+   npx prisma migrate reset
+   npx prisma migrate dev
+   ```
 
 ### Module Not Found Errors
 

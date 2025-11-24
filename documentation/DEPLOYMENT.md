@@ -2,28 +2,6 @@
 
 Guide for deploying the X-Clone application to production.
 
-## Deployment Options
-
-### Vercel (Recommended for Web)
-
-Vercel is the easiest option for deploying Next.js applications.
-
-#### Prerequisites
-- Vercel account
-- GitHub repository
-- PostgreSQL database (not SQLite!)
-
-#### Steps
-
-1. **Migrate to PostgreSQL**
-
-> [!CAUTION]
-> **You MUST migrate from SQLite to PostgreSQL before deploying to production.**
-
-Update `packages/db/prisma/schema.prisma`:
-
-```prisma
-datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -156,24 +134,6 @@ REDIS_URL="redis://user:password@host:6379"
 
 #### Mobile Application
 
-```env
-EXPO_PUBLIC_API_URL="https://your-domain.com"
-```
-
----
-
-## Pre-Deployment Checklist
-
-### Security
-
-- [ ] Migrate from SQLite to PostgreSQL
-- [ ] Generate strong JWT secret (`openssl rand -base64 32`)
-- [ ] Enable HTTPS (automatic on Vercel)
-- [ ] Implement rate limiting
-- [ ] Add input sanitization (DOMPurify)
-- [ ] Move to cloud storage (S3/Cloudinary) for uploads
-- [ ] Add CSRF protection
-- [ ] Improve password validation
 
 ### Performance
 
