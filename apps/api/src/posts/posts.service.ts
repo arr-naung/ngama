@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { POST_INCLUDE } from './posts.constants';
 
 @Injectable()
 export class PostsService {
@@ -84,64 +85,7 @@ export class PostsService {
             cursor: cursor ? { id: cursor } : undefined,
             skip: cursor ? 1 : 0,
             where: { parentId: null },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true,
-                    },
-                },
-                _count: {
-                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                },
-                repost: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                        quote: {
-                            include: {
-                                author: {
-                                    select: {
-                                        id: true,
-                                        username: true,
-                                        name: true,
-                                        image: true,
-                                    },
-                                },
-                                _count: {
-                                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                                },
-                            },
-                        },
-                    },
-                },
-                quote: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                    },
-                },
-            },
+            include: POST_INCLUDE,
             orderBy: { createdAt: 'desc' },
         });
 
@@ -166,64 +110,7 @@ export class PostsService {
     async findOne(id: string, currentUserId?: string) {
         const post = await this.prisma.post.findUnique({
             where: { id },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true,
-                    },
-                },
-                _count: {
-                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                },
-                repost: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                        quote: {
-                            include: {
-                                author: {
-                                    select: {
-                                        id: true,
-                                        username: true,
-                                        name: true,
-                                        image: true,
-                                    },
-                                },
-                                _count: {
-                                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                                },
-                            },
-                        },
-                    },
-                },
-                quote: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                    },
-                },
-            },
+            include: POST_INCLUDE,
         });
 
         if (!post) return null;
@@ -232,64 +119,7 @@ export class PostsService {
         const replies = await this.prisma.post.findMany({
             take: 20,
             where: { parentId: id },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true,
-                    },
-                },
-                _count: {
-                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                },
-                repost: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                        quote: {
-                            include: {
-                                author: {
-                                    select: {
-                                        id: true,
-                                        username: true,
-                                        name: true,
-                                        image: true,
-                                    },
-                                },
-                                _count: {
-                                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                                },
-                            },
-                        },
-                    },
-                },
-                quote: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                    },
-                },
-            },
+            include: POST_INCLUDE,
             orderBy: { createdAt: 'asc' },
         });
 
@@ -299,64 +129,7 @@ export class PostsService {
         while (currentPost.parentId) {
             const parent = await this.prisma.post.findUnique({
                 where: { id: currentPost.parentId },
-                include: {
-                    author: {
-                        select: {
-                            id: true,
-                            username: true,
-                            name: true,
-                            image: true,
-                        },
-                    },
-                    _count: {
-                        select: { likes: true, replies: true, reposts: true, quotes: true },
-                    },
-                    repost: {
-                        include: {
-                            author: {
-                                select: {
-                                    id: true,
-                                    username: true,
-                                    name: true,
-                                    image: true,
-                                },
-                            },
-                            _count: {
-                                select: { likes: true, replies: true, reposts: true, quotes: true },
-                            },
-                            quote: {
-                                include: {
-                                    author: {
-                                        select: {
-                                            id: true,
-                                            username: true,
-                                            name: true,
-                                            image: true,
-                                        },
-                                    },
-                                    _count: {
-                                        select: { likes: true, replies: true, reposts: true, quotes: true },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    quote: {
-                        include: {
-                            author: {
-                                select: {
-                                    id: true,
-                                    username: true,
-                                    name: true,
-                                    image: true,
-                                },
-                            },
-                            _count: {
-                                select: { likes: true, replies: true, reposts: true, quotes: true },
-                            },
-                        },
-                    },
-                },
+                include: POST_INCLUDE,
             });
             if (!parent) break;
             ancestors.unshift(parent);
@@ -529,64 +302,7 @@ export class PostsService {
             cursor: cursor ? { id: cursor } : undefined,
             skip: cursor ? 1 : 0,
             where: { parentId: postId },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true,
-                    },
-                },
-                _count: {
-                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                },
-                repost: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                        quote: {
-                            include: {
-                                author: {
-                                    select: {
-                                        id: true,
-                                        username: true,
-                                        name: true,
-                                        image: true,
-                                    },
-                                },
-                                _count: {
-                                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                                },
-                            },
-                        },
-                    },
-                },
-                quote: {
-                    include: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                        _count: {
-                            select: { likes: true, replies: true, reposts: true, quotes: true },
-                        },
-                    },
-                },
-            },
+            include: POST_INCLUDE,
             orderBy: { createdAt: 'asc' },
         });
 

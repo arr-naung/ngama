@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Query, UseGuards, Request, NotFoundExcepti
 import { PostsService } from './posts.service';
 import { AuthGuard } from '@nestjs/passport';
 import { OptionalAuthGuard } from '../auth/optional-auth.guard';
+import { CreatePostDto } from './dto/create-post.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -9,7 +10,7 @@ export class PostsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post()
-    create(@Body() createPostDto: any, @Request() req: any) {
+    create(@Body() createPostDto: CreatePostDto, @Request() req: any) {
         return this.postsService.create(createPostDto, req.user.id);
     }
 

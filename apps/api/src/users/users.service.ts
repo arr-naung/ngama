@@ -1,6 +1,7 @@
 import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PostsService } from '../posts/posts.service';
+import { POST_INCLUDE } from '../posts/posts.constants';
 
 @Injectable()
 export class UsersService {
@@ -218,36 +219,7 @@ export class UsersService {
         where: { userId: user.id },
         include: {
           post: {
-            include: {
-              author: {
-                select: {
-                  id: true,
-                  username: true,
-                  name: true,
-                  image: true,
-                },
-              },
-              _count: {
-                select: {
-                  likes: true,
-                  replies: true,
-                  reposts: true,
-                  quotes: true,
-                },
-              },
-              quote: {
-                include: {
-                  author: {
-                    select: {
-                      id: true,
-                      username: true,
-                      name: true,
-                      image: true,
-                    },
-                  },
-                },
-              },
-            },
+            include: POST_INCLUDE,
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -280,69 +252,7 @@ export class UsersService {
       cursor: cursor ? { id: cursor } : undefined,
       skip: cursor ? 1 : 0,
       where,
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            replies: true,
-            reposts: true,
-            quotes: true,
-          },
-        },
-        repost: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                username: true,
-                name: true,
-                image: true,
-              },
-            },
-            _count: {
-              select: { likes: true, replies: true, reposts: true, quotes: true },
-            },
-            quote: {
-              include: {
-                author: {
-                  select: {
-                    id: true,
-                    username: true,
-                    name: true,
-                    image: true,
-                  },
-                },
-                _count: {
-                  select: { likes: true, replies: true, reposts: true, quotes: true },
-                },
-              },
-            },
-          },
-        },
-        quote: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                username: true,
-                name: true,
-                image: true,
-              },
-            },
-            _count: {
-              select: { likes: true, replies: true, reposts: true, quotes: true },
-            },
-          },
-        },
-      },
+      include: POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
 

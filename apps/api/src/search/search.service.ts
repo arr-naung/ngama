@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PostsService } from '../posts/posts.service';
+import { POST_INCLUDE } from '../posts/posts.constants';
 
 @Injectable()
 export class SearchService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private postsService: PostsService
+    ) { }
 
     async search(query: string, usersCursor?: string, postsCursor?: string, limit: number = 20, userId?: string) {
         if (!query || query.trim().length === 0) {
@@ -56,41 +61,7 @@ export class SearchService {
             where: {
                 content: { contains: query, mode: 'insensitive' },
             },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        username: true,
-                        name: true,
-                        image: true,
-                    },
-                },
-                _count: {
-                    select: { likes: true, replies: true, reposts: true, quotes: true },
-                },
-                repost: {
-                    include: {
-                        author: {
-                            select: {
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                    },
-                },
-                quote: {
-                    include: {
-                        author: {
-                            select: {
-                                username: true,
-                                name: true,
-                                image: true,
-                            },
-                        },
-                    },
-                },
-            },
+            include: POST_INCLUDE,
             orderBy: {
                 createdAt: 'desc',
             },
@@ -100,44 +71,14 @@ export class SearchService {
         const posts = postsHasMore ? postsResults.slice(0, validLimit) : postsResults;
         const postsNextCursor = postsHasMore ? posts[posts.length - 1].id : null;
 
-        // Add interaction status to all posts
-        const postsWithStatus: any[] = await Promise.all(
-            posts.map(async (post: any) => {
-                if (!userId) {
-                    return {
-                        ...post,
-                        isLikedByMe: false,
-                        isRepostedByMe: false,
-                    };
-                }
-                const [like, repost] = await Promise.all([
-                    this.prisma.like.findUnique({
-                        where: {
-                            userId_postId: {
-                                userId,
-                                postId: post.id,
-                            },
-                        },
-                    }),
-                    this.prisma.repost.findUnique({
-                        where: {
-                            userId_postId: {
-                                userId,
-                                postId: post.id,
-                            },
-                        },
-                    })
-                ]);
+        // Add interaction status to all posts using shared service
+        let postsWithStatus;
+        if (userId) {
+            postsWithStatus = await this.postsService.addLikeStatus(posts, userId);
+        } else {
+            postsWithStatus = await this.postsService.addLikeStatus(posts);
+        }
 
-                return {
-                    ...post,
-                    isLikedByMe: !!like,
-                    isRepostedByMe: !!repost,
-                };
-            })
-        );
-
-        console.log('[Search Service] Returning posts[0]:', postsWithLikedStatus[0]);
         return {
             users,
             posts: postsWithStatus,
