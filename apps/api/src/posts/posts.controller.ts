@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards, Request, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards, Request, NotFoundException, Param, Delete } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AuthGuard } from '@nestjs/passport';
 import { OptionalAuthGuard } from '../auth/optional-auth.guard';
@@ -48,5 +48,11 @@ export class PostsController {
     ) {
         const currentUserId = req?.user?.id;
         return this.postsService.getReplies(id, cursor, limit ? parseInt(limit) : undefined, currentUserId);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Delete(':id')
+    async delete(@Param('id') id: string, @Request() req: any) {
+        return this.postsService.delete(id, req.user.id);
     }
 }

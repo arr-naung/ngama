@@ -37,19 +37,19 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes     Like[]
   
   parentId  String?
-  parent    Post?    @relation("PostReplies", fields: [parentId], references: [id])
+  parent    Post?    @relation("PostReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Post[]   @relation("PostReplies")
 
   repostId  String?
-  repost    Post?    @relation("PostReposts", fields: [repostId], references: [id])
+  repost    Post?    @relation("PostReposts", fields: [repostId], references: [id], onDelete: Cascade)
   reposts   Post[]   @relation("PostReposts")
 
   quoteId   String?
-  quote     Post?    @relation("PostQuotes", fields: [quoteId], references: [id])
+  quote     Post?    @relation("PostQuotes", fields: [quoteId], references: [id], onDelete: Cascade)
   quotes    Post[]   @relation("PostQuotes")
 
   notifications Notification[]
@@ -64,9 +64,9 @@ model Like {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   postId    String
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
 }
@@ -92,9 +92,9 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation("UserNotifications", fields: [userId], references: [id])
-  actor     User     @relation("NotificationActor", fields: [actorId], references: [id])
-  post      Post?    @relation(fields: [postId], references: [id])
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor     User     @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([userId, read, createdAt])
   @@index([actorId])

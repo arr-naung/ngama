@@ -7,7 +7,8 @@ import PostInput from '@/components/post-input';
 import ReplyModal from '@/components/reply-modal';
 import QuoteModal from '@/components/quote-modal';
 import { PostCard, Post } from '@/components/post-card';
-import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon } from '@/components/icons';
+import DeleteConfirmationModal from '@/components/delete-confirmation-modal';
+import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon, DeleteIcon } from '@/components/icons';
 import { QuotedPostContent } from '@/components/post-content';
 import { API_URL } from '@/lib/api';
 
@@ -24,11 +25,37 @@ export default function PostPage() {
     const [loadingMoreReplies, setLoadingMoreReplies] = useState(false);
     const [repliesNextCursor, setRepliesNextCursor] = useState<string | null>(null);
     const [repliesHasMore, setRepliesHasMore] = useState(false);
+    const [postMenuOpen, setPostMenuOpen] = useState<string | null>(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [postToDelete, setPostToDelete] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        const handleClickOutside = () => setRetweetMenuOpen(null);
+        const handleClickOutside = () => {
+            setRetweetMenuOpen(null);
+            setPostMenuOpen(null);
+        };
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const user = await res.json();
+                    setCurrentUserId(user.id);
+                }
+            } catch (err) {
+                console.error('Failed to fetch current user', err);
+            }
+        };
+        fetchCurrentUser();
     }, []);
 
     const fetchPost = async () => {
@@ -192,6 +219,34 @@ export default function PostPage() {
         }
     };
 
+    const handleDeleteConfirm = async () => {
+        if (!post) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                router.push('/auth/signin');
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/posts/${post.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!res.ok) throw new Error('Failed to delete post');
+
+            // Navigate back to home or profile
+            router.push('/');
+            router.refresh();
+        } catch (error) {
+            console.error('Delete failed', error);
+            alert('Failed to delete post');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-background text-foreground">
@@ -212,26 +267,67 @@ export default function PostPage() {
         const contentPost = p.repost ? p.repost : p;
         return (
             <>
-                <div className="flex items-center gap-3 mb-2">
-                    <Link href={`/u/${contentPost.author.username}`} className="flex-shrink-0">
-                        <div className={`rounded-full bg-muted overflow-hidden ${isMain ? 'w-12 h-12' : 'w-10 h-10'}`}>
-                            {contentPost.author.image ? (
-                                <img src={contentPost.author.image} alt={contentPost.author.username} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
-                                    {(contentPost.author.username?.[0] || '?').toUpperCase()}
+                <div className="flex items-center gap-3 mb-2 justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href={`/u/${contentPost.author.username}`} className="flex-shrink-0">
+                            <div className={`rounded-full bg-muted overflow-hidden ${isMain ? 'w-12 h-12' : 'w-10 h-10'}`}>
+                                {contentPost.author.image ? (
+                                    <img src={contentPost.author.image} alt={contentPost.author.username} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
+                                        {(contentPost.author.username?.[0] || '?').toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
+                        <div>
+                            <Link href={`/u/${contentPost.author.username}`} className="font-bold hover:underline block">
+                                {contentPost.author.name || contentPost.author.username}
+                            </Link>
+                            <Link href={`/u/${contentPost.author.username}`} className="text-muted-foreground text-sm block">
+                                @{contentPost.author.username}
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Three-dot menu */}
+                    {currentUserId && (
+                        <div className="relative">
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.nativeEvent.stopImmediatePropagation();
+                                    setPostMenuOpen(postMenuOpen === contentPost.id ? null : contentPost.id);
+                                }}
+                                className="rounded-full p-2 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                type="button"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                                    <path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
+                                </svg>
+                            </button>
+
+                            {postMenuOpen === contentPost.id && (
+                                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-background border border-border z-50">
+                                    {currentUserId === contentPost.author.id && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPostToDelete(contentPost.id);
+                                                setDeleteModalOpen(true);
+                                                setPostMenuOpen(null);
+                                            }}
+                                            className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3"
+                                        >
+                                            <DeleteIcon className="w-5 h-5" />
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
-                    </Link>
-                    <div>
-                        <Link href={`/u/${contentPost.author.username}`} className="font-bold hover:underline block">
-                            {contentPost.author.name || contentPost.author.username}
-                        </Link>
-                        <Link href={`/u/${contentPost.author.username}`} className="text-muted-foreground text-sm block">
-                            @{contentPost.author.username}
-                        </Link>
-                    </div>
+                    )}
                 </div>
 
                 {contentPost.content && (
@@ -660,6 +756,12 @@ export default function PostPage() {
                     }}
                 />
             )}
+
+            <DeleteConfirmationModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+            />
         </main>
     );
 }

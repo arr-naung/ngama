@@ -15,6 +15,7 @@ interface PostCardProps {
             username: string;
             name: string | null;
             image: string | null;
+            id?: string;
         };
         createdAt: string;
         image?: string | null;
@@ -50,6 +51,8 @@ interface PostCardProps {
     onRepost?: () => void;
     onLike?: () => void;
     onQuotePress?: (quoteId: string) => void;
+    onOptions?: (postId: string, authorId: string) => void;
+    currentUserId?: string;
 }
 
 export function PostCard({
@@ -60,7 +63,9 @@ export function PostCard({
     onReply,
     onRepost,
     onLike,
-    onQuotePress
+    onQuotePress,
+    onOptions,
+    currentUserId
 }: PostCardProps) {
     const isRepost = !!post.repost;
     const contentPost = post.repost ? post.repost : post;
@@ -92,16 +97,31 @@ export function PostCard({
 
                 <View className="flex-1">
                     {/* Author Info */}
-                    <View className="flex-row items-center gap-2">
-                        <TouchableOpacity onPress={() => onAuthorPress(contentPost.author.username)}>
-                            <Text className="font-bold text-black dark:text-white text-lg">
-                                {contentPost.author.name || contentPost.author.username}
+                    <View className="flex-row items-center justify-between gap-2">
+                        <View className="flex-row items-center gap-2">
+                            <TouchableOpacity onPress={() => onAuthorPress(contentPost.author.username)}>
+                                <Text className="font-bold text-black dark:text-white text-lg">
+                                    {contentPost.author.name || contentPost.author.username}
+                                </Text>
+                            </TouchableOpacity>
+                            <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
+                            <Text className="text-gray-500 text-base">
+                                · {new Date(contentPost.createdAt).toLocaleDateString()}
                             </Text>
-                        </TouchableOpacity>
-                        <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
-                        <Text className="text-gray-500 text-base">
-                            · {new Date(contentPost.createdAt).toLocaleDateString()}
-                        </Text>
+                        </View>
+
+                        {/* Three-dot menu for own posts */}
+                        {currentUserId && contentPost.author.id === currentUserId && onOptions && (
+                            <TouchableOpacity
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    onOptions(contentPost.id, contentPost.author.id!);
+                                }}
+                                className="p-2"
+                            >
+                                <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     {/* Content */}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Image, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, Image, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,11 +9,13 @@ import { Ionicons } from '@expo/vector-icons';
 import Sidebar from '../../components/sidebar';
 import { PostContent, QuotedPostContent } from '../../components/post-content';
 import { PostCard } from '../../components/ui/post-card';
+import { PostOptionsModal } from '../../components/ui/post-options-modal';
 
 interface Post {
     id: string;
     content: string | null;
     author: {
+        id: string;
         username: string;
         name: string | null;
         image: string | null;
@@ -44,6 +46,7 @@ export default function Feed() {
 
     // Interaction State
     const [repostModalVisible, setRepostModalVisible] = useState(false);
+    const [optionsModalVisible, setOptionsModalVisible] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
     // Sidebar State
@@ -252,6 +255,39 @@ export default function Feed() {
         router.push(`/compose?quote=${selectedPost.id}`);
     };
 
+    const handleOptions = (postId: string, authorId: string) => {
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+            setSelectedPost(post);
+            setOptionsModalVisible(true);
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedPost) return;
+        const postId = selectedPost.id;
+
+        // Optimistic update
+        setPosts(posts.filter(p => p.id !== postId));
+        setOptionsModalVisible(false);
+
+        try {
+            const token = await getToken();
+            const res = await fetch(`${API_URL}/posts/${postId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error('Failed to delete');
+
+            // Refresh posts
+            fetchPosts();
+        } catch (error) {
+            Alert.alert('Error', 'Failed to delete post');
+            fetchPosts(); // Revert on failure
+        }
+    };
+
     const renderItem = ({ item }: { item: Post }) => (
         <PostCard
             post={item}
@@ -262,6 +298,8 @@ export default function Feed() {
             onRepost={() => openRepostModal(item.repost ? item.repost : item)}
             onLike={() => handleLike((item.repost ? item.repost : item).id, (item.repost ? item.repost : item).isLikedByMe)}
             onQuotePress={(quoteId) => router.push(`/post/${quoteId}`)}
+            onOptions={handleOptions}
+            currentUserId={currentUser?.id}
         />
     );
 
@@ -350,6 +388,13 @@ export default function Feed() {
                     </View>
                 </TouchableOpacity>
             </Modal>
+
+            {/* Post Options Modal */}
+            <PostOptionsModal
+                visible={optionsModalVisible}
+                onClose={() => setOptionsModalVisible(false)}
+                onDelete={handleDeleteConfirm}
+            />
 
             <Sidebar
                 visible={sidebarVisible}

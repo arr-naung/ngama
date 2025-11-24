@@ -11,13 +11,31 @@ export class AuthService {
     ) { }
 
     async validateUser(userId: string) {
-        return this.prisma.user.findUnique({ where: { id: userId } });
+        return this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                username: true,
+                name: true,
+                email: true,
+                image: true,
+                coverImage: true,
+                bio: true,
+                createdAt: true,
+                updatedAt: true,
+                // password explicitly excluded for security
+            }
+        });
     }
 
     async login(user: any) {
         const payload = { userId: user.id, email: user.email, username: user.username };
+
+        // Exclude password from response
+        const { password, ...userWithoutPassword } = user;
+
         return {
-            user,
+            user: userWithoutPassword,
             token: this.jwtService.sign(payload),
         };
     }

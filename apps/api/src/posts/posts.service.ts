@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { POST_INCLUDE } from './posts.constants';
 
@@ -7,6 +7,23 @@ export class PostsService {
     constructor(private prisma: PrismaService) { }
 
     async create(data: any, userId: string) {
+        // Handle Repost Toggle: If it's a pure repost (no content) and already exists, delete it (undo)
+        if (data.repostId && !data.content && !data.quoteId && !data.parentId) {
+            const existingRepost = await this.prisma.post.findFirst({
+                where: {
+                    authorId: userId,
+                    repostId: data.repostId,
+                },
+            });
+
+            if (existingRepost) {
+                await this.prisma.post.delete({
+                    where: { id: existingRepost.id },
+                });
+                return { deleted: true };
+            }
+        }
+
         const post = await this.prisma.post.create({
             data: {
                 ...data,
@@ -322,5 +339,29 @@ export class PostsService {
             nextCursor,
             hasMore,
         };
+    }
+
+    async delete(postId: string, userId: string) {
+        // 1. Find the post
+        const post = await this.prisma.post.findUnique({
+            where: { id: postId },
+            select: { id: true, authorId: true }
+        });
+
+        if (!post) {
+            throw new NotFoundException('Post not found');
+        }
+
+        // 2. Authorization: Only the author can delete
+        if (post.authorId !== userId) {
+            throw new ForbiddenException('You can only delete your own posts');
+        }
+
+        // 3. Delete the post (cascade will handle related data)
+        await this.prisma.post.delete({
+            where: { id: postId }
+        });
+
+        return { message: 'Post deleted successfully' };
     }
 }

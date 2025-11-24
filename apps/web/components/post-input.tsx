@@ -120,7 +120,12 @@ export default function PostInput({
                 })
             });
 
-            if (!res.ok) throw new Error('Failed to post');
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                const errorMessage = errorData.message || errorData.error || 'Failed to post';
+                console.error('API Error:', errorData);
+                throw new Error(errorMessage);
+            }
 
             setContent('');
             removeImage();
@@ -132,7 +137,7 @@ export default function PostInput({
             }
         } catch (error) {
             console.error(error);
-            alert('Failed to create post');
+            alert(`Failed to create post: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setLoading(false);
         }

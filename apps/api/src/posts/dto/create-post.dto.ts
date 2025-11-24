@@ -3,7 +3,7 @@ import { IsString, IsOptional, MaxLength } from 'class-validator';
 export class CreatePostDto {
     @IsString()
     @IsOptional()
-    @MaxLength(280)
+    @MaxLength(10000) // Support long-form content
     content?: string;
 
     @IsString()

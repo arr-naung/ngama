@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ReplyModal from './reply-modal';
 import QuoteModal from './quote-modal';
+import DeleteConfirmationModal from './delete-confirmation-modal';
 import { PostCard, Post } from './post-card';
 import { API_URL } from '@/lib/api';
 
@@ -18,15 +19,42 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
     const [replyingTo, setReplyingTo] = useState<Post | null>(null);
     const [quotingPost, setQuotingPost] = useState<Post | null>(null);
     const [retweetMenuOpen, setRetweetMenuOpen] = useState<string | null>(null);
+    const [postMenuOpen, setPostMenuOpen] = useState<string | null>(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [postToDelete, setPostToDelete] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPosts();
+        fetchCurrentUser();
 
         // Close menu when clicking outside
-        const handleClickOutside = () => setRetweetMenuOpen(null);
+        const handleClickOutside = () => {
+            setRetweetMenuOpen(null);
+            setPostMenuOpen(null);
+        };
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, [apiUrl]);
+
+
+
+    const fetchCurrentUser = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_URL}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const user = await res.json();
+                setCurrentUserId(user.id);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user', error);
+        }
+    };
 
     const fetchPosts = async (cursor?: string) => {
         const isLoadingMore = !!cursor;
@@ -157,6 +185,8 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                 console.log('Repost removed successfully');
             } else {
                 console.log('Repost created successfully');
+                // Refresh to show the new repost in the feed
+                router.refresh();
             }
         } catch (error) {
             console.error('Repost failed', error);
@@ -178,6 +208,41 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
         }
     };
 
+    const handleDeleteClick = (postId: string) => {
+        setPostToDelete(postId);
+        setDeleteModalOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!postToDelete) return;
+
+        // Optimistic update
+        setPosts(posts.filter(p => p.id !== postToDelete));
+
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                router.push('/auth/signin');
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/posts/${postToDelete}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error('Failed to delete post');
+
+            router.refresh();
+        } catch (error) {
+            console.error('Delete failed', error);
+            fetchPosts(); // Revert on failure
+            alert('Failed to delete post');
+        } finally {
+            setPostToDelete(null);
+        }
+    };
+
     if (loading) {
         return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
     }
@@ -195,6 +260,14 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                         onRepost={handleRepost}
                         onQuote={setQuotingPost}
                         onLike={handleLike}
+                        onDelete={handleDeleteClick}
+                        currentUserId={currentUserId || undefined}
+                        postMenuOpen={postMenuOpen}
+                        onPostMenuToggle={(id, e) => {
+                            e.stopPropagation();
+                            e.nativeEvent.stopImmediatePropagation();
+                            setPostMenuOpen(postMenuOpen === id ? null : id);
+                        }}
                         retweetMenuOpen={retweetMenuOpen === post.id}
                         onRetweetMenuToggle={(e) => {
                             e.nativeEvent.stopImmediatePropagation();
@@ -235,6 +308,15 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                     onClose={() => setQuotingPost(null)}
                 />
             )}
+
+            <DeleteConfirmationModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setPostToDelete(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+            />
         </>
     );
 }

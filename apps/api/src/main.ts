@@ -9,6 +9,8 @@ async function bootstrap() {
     whitelist: true,
     transform: true,
   }));
+  // TransformInterceptor temporarily disabled due to RxJS version conflicts
+  // app.useGlobalInterceptors(new TransformInterceptor());
   await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Modal, Share } from 'react-native';
+import { View, Text, ActivityIndicator, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Modal, Share, Alert } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { QuotedPostContent } from '../../components/post-content';
 import { QuotedPostCard } from '../../components/ui/quoted-post-card';
 import { RepostIcon, ViewsIcon } from '../../components/icons';
+import { PostOptionsModal } from '../../components/ui/post-options-modal';
 
 export default function PostDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -24,7 +25,9 @@ export default function PostDetailsScreen() {
 
     // Interaction State
     const [repostModalVisible, setRepostModalVisible] = useState(false);
+    const [optionsModalVisible, setOptionsModalVisible] = useState(false);
     const [selectedPost, setSelectedPost] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     const handleItemReply = (item: any) => {
         router.push(`/compose?replyTo=${item.id}`);
@@ -176,7 +179,63 @@ export default function PostDetailsScreen() {
 
     useEffect(() => {
         fetchPost();
+        fetchCurrentUser();
     }, [id]);
+
+    const fetchCurrentUser = async () => {
+        try {
+            const token = await getToken();
+            if (!token) return;
+            const res = await fetch(`${API_URL}/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentUser(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch current user', error);
+        }
+    };
+
+    const handleOptions = (item: any) => {
+        setSelectedPost(item);
+        setOptionsModalVisible(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedPost) return;
+        const postId = selectedPost.id;
+
+        // Optimistic update (if it's a reply)
+        if (post.replies) {
+            setPost((prev: any) => ({
+                ...prev,
+                replies: prev.replies.filter((r: any) => r.id !== postId)
+            }));
+        }
+        setOptionsModalVisible(false);
+
+        try {
+            const token = await getToken();
+            const res = await fetch(`${API_URL}/posts/${postId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error('Failed to delete');
+
+            // If deleted main post, go back
+            if (postId === post.id) {
+                router.back();
+            } else {
+                fetchPost(); // Refresh for replies
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to delete post');
+            fetchPost(); // Revert on failure
+        }
+    };
 
     const loadMoreReplies = async () => {
         if (!repliesNextCursor || loadingMoreReplies || !post) return;
@@ -297,6 +356,14 @@ export default function PostDetailsScreen() {
                             </TouchableOpacity>
                             <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
                         </View>
+                        {currentUser && contentPost.author.id === currentUser.id && (
+                            <TouchableOpacity
+                                onPress={() => handleOptions(contentPost)}
+                                className="ml-auto p-2"
+                            >
+                                <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     {/* Content: Full Width */}
@@ -404,6 +471,14 @@ export default function PostDetailsScreen() {
                             <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
                             <Text className="text-gray-500 text-base">· {new Date(contentPost.createdAt).toLocaleDateString()}</Text>
                         </View>
+                        {currentUser && contentPost.author.id === currentUser.id && (
+                            <TouchableOpacity
+                                onPress={() => handleOptions(contentPost)}
+                                className="ml-auto p-2"
+                            >
+                                <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        )}
 
                         {contentPost.content && (
                             <Text className="text-black dark:text-white mt-1 text-base leading-5">{contentPost.content}</Text>
@@ -562,6 +637,13 @@ export default function PostDetailsScreen() {
                     </View>
                 </TouchableOpacity>
             </Modal>
+
+            {/* Post Options Modal */}
+            <PostOptionsModal
+                visible={optionsModalVisible}
+                onClose={() => setOptionsModalVisible(false)}
+                onDelete={handleDeleteConfirm}
+            />
         </SafeAreaView>
     );
 }

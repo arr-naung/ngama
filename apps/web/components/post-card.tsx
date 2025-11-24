@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon } from './icons';
+import { HeartIcon, ReplyIcon, RepostIcon, QuoteIcon, ViewsIcon, DeleteIcon } from './icons';
 import { PostContent, QuotedPostContent } from './post-content';
 
 export interface Post {
     id: string;
     content: string | null;
     author: {
+        id: string;
         username: string;
         name: string | null;
         image: string | null;
@@ -37,8 +38,12 @@ interface PostCardProps {
     onRepost: (post: Post) => void;
     onQuote: (post: Post) => void;
     onLike: (postId: string, isLiked: boolean, e: React.MouseEvent) => void;
+    onDelete?: (postId: string) => void;
+    currentUserId?: string;
     retweetMenuOpen: boolean;
     onRetweetMenuToggle: (e: React.MouseEvent) => void;
+    postMenuOpen?: string | null;
+    onPostMenuToggle?: (postId: string, e: React.MouseEvent) => void;
 }
 
 export function PostCard({
@@ -49,8 +54,12 @@ export function PostCard({
     onRepost,
     onQuote,
     onLike,
+    onDelete,
+    currentUserId,
     retweetMenuOpen,
-    onRetweetMenuToggle
+    onRetweetMenuToggle,
+    postMenuOpen,
+    onPostMenuToggle
 }: PostCardProps) {
     const isRepost = !!post.repost;
     const contentPost = post.repost || post;
@@ -87,20 +96,60 @@ export function PostCard({
                     </Link>
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Link
-                            href={`/u/${contentPost.author.username}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onAuthorClick(contentPost.author.username);
-                            }}
-                            className="font-bold hover:underline"
-                        >
-                            {contentPost.author.name || contentPost.author.username}
-                        </Link>
-                        <span className="text-muted-foreground">@{contentPost.author.username}</span>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="text-muted-foreground">{new Date(contentPost.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href={`/u/${contentPost.author.username}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAuthorClick(contentPost.author.username);
+                                }}
+                                className="font-bold hover:underline"
+                            >
+                                {contentPost.author.name || contentPost.author.username}
+                            </Link>
+                            <span className="text-muted-foreground">@{contentPost.author.username}</span>
+                            <span className="text-muted-foreground">·</span>
+                            <span className="text-muted-foreground">{new Date(contentPost.createdAt).toLocaleDateString()}</span>
+                        </div>
+
+                        {/* THREE-DOT MENU */}
+                        {currentUserId && (
+                            <div className="relative">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        onPostMenuToggle?.(contentPost.id, e);
+                                    }}
+                                    className="rounded-full p-2 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                    type="button"
+                                >
+                                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                                        <path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
+                                    </svg>
+                                </button>
+
+                                {/* DROPDOWN MENU */}
+                                {postMenuOpen === contentPost.id && (
+                                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-background border border-border z-50">
+                                        {currentUserId === contentPost.author.id && onDelete && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDelete(contentPost.id);
+                                                    onPostMenuToggle?.(contentPost.id, e);
+                                                }}
+                                                className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3"
+                                            >
+                                                <DeleteIcon className="w-5 h-5" />
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {contentPost.content && (
