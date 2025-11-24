@@ -66,7 +66,29 @@ export class SearchService {
                     },
                 },
                 _count: {
-                    select: { likes: true, replies: true },
+                    select: { likes: true, replies: true, reposts: true, quotes: true },
+                },
+                repost: {
+                    include: {
+                        author: {
+                            select: {
+                                username: true,
+                                name: true,
+                                image: true,
+                            },
+                        },
+                    },
+                },
+                quote: {
+                    include: {
+                        author: {
+                            select: {
+                                username: true,
+                                name: true,
+                                image: true,
+                            },
+                        },
+                    },
                 },
             },
             orderBy: {
@@ -78,27 +100,39 @@ export class SearchService {
         const posts = postsHasMore ? postsResults.slice(0, validLimit) : postsResults;
         const postsNextCursor = postsHasMore ? posts[posts.length - 1].id : null;
 
-        // Add isLiked status to all posts
-        console.log('[Search Service] Processing isLiked for userId:', userId);
-        const postsWithLikedStatus: any[] = await Promise.all(
+        // Add interaction status to all posts
+        const postsWithStatus: any[] = await Promise.all(
             posts.map(async (post: any) => {
                 if (!userId) {
                     return {
                         ...post,
-                        isLiked: false,
+                        isLikedByMe: false,
+                        isRepostedByMe: false,
                     };
                 }
-                const like = await this.prisma.like.findUnique({
-                    where: {
-                        userId_postId: {
-                            userId,
-                            postId: post.id,
+                const [like, repost] = await Promise.all([
+                    this.prisma.like.findUnique({
+                        where: {
+                            userId_postId: {
+                                userId,
+                                postId: post.id,
+                            },
                         },
-                    },
-                });
+                    }),
+                    this.prisma.repost.findUnique({
+                        where: {
+                            userId_postId: {
+                                userId,
+                                postId: post.id,
+                            },
+                        },
+                    })
+                ]);
+
                 return {
                     ...post,
-                    isLiked: !!like,
+                    isLikedByMe: !!like,
+                    isRepostedByMe: !!repost,
                 };
             })
         );
@@ -106,7 +140,7 @@ export class SearchService {
         console.log('[Search Service] Returning posts[0]:', postsWithLikedStatus[0]);
         return {
             users,
-            posts: postsWithLikedStatus,
+            posts: postsWithStatus,
             usersNextCursor,
             postsNextCursor,
             usersHasMore,
