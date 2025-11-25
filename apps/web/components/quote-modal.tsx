@@ -18,9 +18,10 @@ interface QuoteModalProps {
     };
     isOpen: boolean;
     onClose: () => void;
+    onSuccess?: () => void;
 }
 
-export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
+export default function QuoteModal({ post, isOpen, onClose, onSuccess }: QuoteModalProps) {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<{ image: string | null; username: string } | null>(null);
@@ -134,6 +135,7 @@ export default function QuoteModal({ post, isOpen, onClose }: QuoteModalProps) {
             setContent('');
             removeImage();
             onClose();
+            if (onSuccess) onSuccess();
             window.location.reload();
         } catch (error) {
             console.error('Quote error:', error);
