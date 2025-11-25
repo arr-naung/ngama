@@ -105,7 +105,7 @@ export default function NotificationsPage() {
                                                                 <img src={notification.actor.image} alt={notification.actor.username} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs font-bold">
-                                                                    {notification.actor.username[0].toUpperCase()}
+                                                                    {notification.actor?.username?.[0]?.toUpperCase() || '?'}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -143,7 +143,7 @@ export default function NotificationsPage() {
                                                     <img src={notification.actor.image} alt={notification.actor.username} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold">
-                                                        {notification.actor.username[0].toUpperCase()}
+                                                        {notification.actor?.username?.[0]?.toUpperCase() || '?'}
                                                     </div>
                                                 )}
                                             </div>
