@@ -36,3 +36,13 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Uploads (Don't push user images)
+apps/api/uploads/
+
+# Mobile
+.expo/
+*.jks
+*.keystore
+android/
+ios/
