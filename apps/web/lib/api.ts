@@ -1,4 +1,5 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export const API_URL = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
 
 export const getAuthHeader = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
