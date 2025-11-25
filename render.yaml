@@ -4,9 +4,9 @@ services:
     name: ngama-api
     runtime: node
     plan: free
-    rootDir: apps/api
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    rootDir: .
+    buildCommand: npm install && npx turbo build --filter=api
+    startCommand: node apps/api/dist/main
     envVars:
       - key: DATABASE_URL
         sync: false # ⚠️ PASTE YOUR SUPABASE CONNECTION STRING HERE
@@ -20,9 +20,9 @@ services:
     name: ngama-web
     runtime: node
     plan: free
-    rootDir: apps/web
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
+    rootDir: .
+    buildCommand: npm install && npx turbo build --filter=web
+    startCommand: npm start --workspace=web
     envVars:
       - key: NEXT_PUBLIC_API_URL
         fromService:
