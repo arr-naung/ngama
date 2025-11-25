@@ -698,11 +698,11 @@ export default function PostPage() {
                     disabled={loadingMoreReplies}
                     className="w-full py-4 text-primary hover:bg-muted/50 transition-colors border-b border-border disabled:opacity-50"
                 >
-                    {loadingMoreReplies ? 'Loading...' : `Load more replies (${post._count.replies - post.replies.length} remaining)`}
+                    {loadingMoreReplies ? 'Loading...' : `Load more replies (${post._count.replies - (post.replies?.length || 0)} remaining)`}
                 </button>
             )}
 
-            {!loading && !repliesHasMore && post && post.replies.length > 0 && (
+            {!loading && !repliesHasMore && post && (post.replies?.length || 0) > 0 && (
                 <div className="text-center py-4 text-muted-foreground border-b border-border">
                     End of replies
                 </div>
