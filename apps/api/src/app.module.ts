@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,6 +16,14 @@ import { join } from 'path';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000, // 60 seconds
+          limit: 100, // 100 requests per ttl
+        },
+      ],
+    }),
     PrismaModule,
     AuthModule,
     PostsModule,
@@ -28,6 +38,12 @@ import { join } from 'path';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }

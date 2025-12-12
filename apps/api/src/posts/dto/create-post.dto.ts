@@ -1,9 +1,12 @@
 import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import sanitizeHtml from 'sanitize-html';
 
 export class CreatePostDto {
     @IsString()
     @IsOptional()
     @MaxLength(10000) // Support long-form content
+    @Transform(({ value }) => value ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
     content?: string;
 
     @IsString()
