@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { POST_INCLUDE } from './posts.constants';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class PostsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsGateway: NotificationsGateway,
+    ) { }
 
     async create(data: any, userId: string) {
         // Handle Repost Toggle: If it's a pure repost (no content) and already exists, delete it (undo)
@@ -48,14 +52,19 @@ export class PostsService {
                 select: { authorId: true }
             });
             if (parentPost && parentPost.authorId !== userId) {
-                await this.prisma.notification.create({
+                const notification = await this.prisma.notification.create({
                     data: {
                         type: 'REPLY',
                         userId: parentPost.authorId,
                         actorId: userId,
                         postId: post.id
+                    },
+                    include: {
+                        actor: true,
+                        post: true,
                     }
                 });
+                this.notificationsGateway.sendNotification(parentPost.authorId, notification);
             }
         } else if (data.repostId) {
             // This is a repost
@@ -64,14 +73,19 @@ export class PostsService {
                 select: { authorId: true }
             });
             if (originalPost && originalPost.authorId !== userId) {
-                await this.prisma.notification.create({
+                const notification = await this.prisma.notification.create({
                     data: {
                         type: 'REPOST',
                         userId: originalPost.authorId,
                         actorId: userId,
                         postId: post.id
+                    },
+                    include: {
+                        actor: true,
+                        post: true,
                     }
                 });
+                this.notificationsGateway.sendNotification(originalPost.authorId, notification);
             }
         } else if (data.quoteId) {
             // This is a quote
@@ -80,14 +94,19 @@ export class PostsService {
                 select: { authorId: true }
             });
             if (quotedPost && quotedPost.authorId !== userId) {
-                await this.prisma.notification.create({
+                const notification = await this.prisma.notification.create({
                     data: {
                         type: 'QUOTE',
                         userId: quotedPost.authorId,
                         actorId: userId,
                         postId: post.id
+                    },
+                    include: {
+                        actor: true,
+                        post: true,
                     }
                 });
+                this.notificationsGateway.sendNotification(quotedPost.authorId, notification);
             }
         }
 
@@ -297,14 +316,19 @@ export class PostsService {
                 select: { authorId: true }
             });
             if (post && post.authorId !== userId) {
-                await this.prisma.notification.create({
+                const notification = await this.prisma.notification.create({
                     data: {
                         type: 'LIKE',
                         userId: post.authorId,
                         actorId: userId,
                         postId: postId
+                    },
+                    include: {
+                        actor: true,
+                        post: true,
                     }
                 });
+                this.notificationsGateway.sendNotification(post.authorId, notification);
             }
             return { liked: true };
         }
