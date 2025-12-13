@@ -316,7 +316,7 @@ export default function Feed() {
                         size="small"
                     />
                 </TouchableOpacity>
-                <Text className="text-black dark:text-white text-2xl font-bold">𝕏</Text>
+                <Text className="text-black dark:text-white text-2xl font-bold">𝔸</Text>
                 <View className="w-8" />
             </View>
 

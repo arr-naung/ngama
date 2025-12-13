@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function Landing() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-black items-center justify-center p-8">
-            <Text className="text-black dark:text-white text-4xl font-bold mb-12">X</Text>
+            <Text className="text-black dark:text-white text-4xl font-bold mb-12">𝔸</Text>
 
             <Text className="text-black dark:text-white text-3xl font-bold mb-12 text-center">
                 See what's happening in the world right now.
