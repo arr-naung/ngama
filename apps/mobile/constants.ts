@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://192.168.1.33:3001';
+export const BASE_URL = 'https://silent-cynthy-x-instance-543a2f86.koyeb.app';
 export const API_URL = `${BASE_URL}`;
 
 export const getImageUrl = (path: string | null | undefined) => {

@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { getAuth } from '../lib/auth';
 import Constants from 'expo-constants';
 import Toast from 'react-native-toast-message';
+import { API_URL } from '../constants';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -21,9 +22,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             const { token, user } = await getAuth();
             if (!token || !user) return;
 
-            // Get API URL from Expo config or default to localhost
-            // Note: Use your machine's local IP for Android Emulator / Physical Device
-            const apiUrl = Constants.expoConfig?.extra?.apiUrl || 'http://192.168.1.33:3001';
+            // Get API URL from Expo config or use centralized constant
+            const apiUrl = Constants.expoConfig?.extra?.apiUrl || API_URL;
 
             const newSocket = io(apiUrl, {
                 auth: {
