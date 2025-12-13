@@ -51,9 +51,9 @@ export default function Sidebar() {
 
     return (
         <div className="sticky top-0 h-screen w-64 bg-background p-4 pl-6 hidden md:flex flex-col">
-            <div className="mb-4 px-4 py-2">
+            <Link href="/" className="mb-4 px-4 py-2 block">
                 <XLogo className="w-8 h-8" />
-            </div>
+            </Link>
 
             <nav className="flex-1 space-y-2">
                 <Link href="/" className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === '/' ? 'font-bold' : ''}`}>

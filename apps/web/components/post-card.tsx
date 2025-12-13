@@ -77,7 +77,7 @@ export function PostCard({
             )}
 
             <div className="flex gap-3">
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 w-10 h-10">
                     <Link
                         href={`/u/${contentPost.author.username}`}
                         onClick={(e) => {

@@ -558,7 +558,7 @@ export default function PostPage() {
             {post.replies?.map((reply) => (
                 <div key={reply.id} className="p-4 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router.push(`/post/${reply.id}`)}>
                     <div className="flex gap-3">
-                        <Link href={`/u/${reply.author.username}`} className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/u/${reply.author.username}`} className="flex-shrink-0 w-10 h-10" onClick={(e) => e.stopPropagation()}>
                             <div className="w-10 h-10 rounded-full bg-muted overflow-hidden">
                                 {reply.author.image ? (
                                     <img src={reply.author.image} alt={reply.author.username} className="w-full h-full object-cover" />

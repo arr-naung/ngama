@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { XLogo } from './x-logo';
@@ -85,8 +86,10 @@ export default function MobileHeader() {
                     )}
                 </div>
 
-                {/* Logo */}
-                <XLogo className="w-7 h-7" />
+                {/* Logo - Click to go to feed */}
+                <Link href="/">
+                    <XLogo className="w-7 h-7" />
+                </Link>
 
                 {/* Spacer for balance */}
                 <div className="w-8"></div>

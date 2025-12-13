@@ -31,11 +31,13 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-screen justify-center">
             <div className="flex max-w-7xl w-full">
                 <Sidebar />
-                <main className="flex-1 min-h-screen flex flex-col">
-                    {/* Mobile Header - only visible on mobile */}
-                    <MobileHeader />
-                    <div className="max-w-2xl w-full border-x border-border min-h-screen pb-16 md:pb-0">
-                        {children}
+                <main className="flex-1 min-h-screen flex">
+                    <div className="flex-1 flex flex-col max-w-2xl w-full border-x border-border min-h-screen">
+                        {/* Mobile Header - only visible on mobile */}
+                        <MobileHeader />
+                        <div className="flex-1 pb-16 md:pb-0">
+                            {children}
+                        </div>
                     </div>
                     <RightSidebar />
                 </main>
