@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Image, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import Sidebar from '../../components/sidebar';
 import { PostContent, QuotedPostContent } from '../../components/post-content';
 import { PostCard } from '../../components/ui/post-card';
 import { PostOptionsModal } from '../../components/ui/post-options-modal';
+import { UserAvatar } from '../../components/ui/user-avatar';
 
 interface Post {
     id: string;
@@ -127,6 +128,7 @@ export default function Feed() {
     const onRefresh = () => {
         setRefreshing(true);
         fetchPosts();
+        fetchCurrentUser();
     };
 
     const handleLike = async (postId: string, currentLiked: boolean) => {
@@ -307,17 +309,12 @@ export default function Feed() {
         <SafeAreaView className="flex-1 bg-white dark:bg-black">
             <View className="border-b border-gray-200 dark:border-gray-800 p-2 flex-row justify-between items-center">
                 <TouchableOpacity onPress={() => setSidebarVisible(true)}>
-                    <View className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                        {currentUser?.image ? (
-                            <Image source={{ uri: getImageUrl(currentUser.image)! }} className="w-full h-full" resizeMode="cover" />
-                        ) : (
-                            <View className="w-full h-full items-center justify-center bg-gray-300 dark:bg-gray-700">
-                                <Text className="text-black dark:text-white text-xs font-bold">
-                                    {(currentUser?.username?.[0] || '?').toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                    <UserAvatar
+                        image={currentUser?.image}
+                        username={currentUser?.username || '?'}
+                        name={currentUser?.name}
+                        size="small"
+                    />
                 </TouchableOpacity>
                 <Text className="text-black dark:text-white text-2xl font-bold">𝕏</Text>
                 <View className="w-8" />

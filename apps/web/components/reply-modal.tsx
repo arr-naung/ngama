@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_URL } from '@/lib/api';
+import { useAuth } from '@/hooks/use-auth';
 
 interface ReplyModalProps {
     post: {
@@ -23,6 +24,7 @@ export default function ReplyModal({ post, isOpen, onClose }: ReplyModalProps) {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { user } = useAuth();
 
     useEffect(() => {
         if (isOpen) {
@@ -114,8 +116,10 @@ export default function ReplyModal({ post, isOpen, onClose }: ReplyModalProps) {
 
                 {/* Reply Input */}
                 <div className="flex gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0">
-                        {/* Current user avatar placeholder - ideally passed in or fetched */}
+                    <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0 overflow-hidden">
+                        {user?.image ? (
+                            <img src={user.image} alt={user.username} className="h-full w-full object-cover" />
+                        ) : null}
                     </div>
                     <div className="flex-1">
                         <textarea
