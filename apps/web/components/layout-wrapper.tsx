@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from './sidebar';
 import RightSidebar from './right-sidebar';
+import MobileHeader from './mobile-header';
+import MobileBottomNav from './mobile-bottom-nav';
 import { Toaster } from 'sonner';
 import { useSocket } from '@/hooks/use-socket';
 
@@ -29,15 +31,20 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-screen justify-center">
             <div className="flex max-w-7xl w-full">
                 <Sidebar />
-                <main className="flex-1 min-h-screen flex">
-                    <div className="max-w-2xl w-full border-x border-border min-h-screen">
+                <main className="flex-1 min-h-screen flex flex-col">
+                    {/* Mobile Header - only visible on mobile */}
+                    <MobileHeader />
+                    <div className="max-w-2xl w-full border-x border-border min-h-screen pb-16 md:pb-0">
                         {children}
                     </div>
                     <RightSidebar />
                 </main>
             </div>
+            {/* Mobile Bottom Nav - only visible on mobile */}
+            <MobileBottomNav />
             {/* @ts-expect-error Sonner types not fully compatible with React 19 yet */}
             <Toaster />
         </div>
     );
 }
+
