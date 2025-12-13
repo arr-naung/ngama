@@ -50,6 +50,7 @@ export class UploadController {
                     },
                     (error, result) => {
                         if (error) return reject(error);
+                        if (!result) return reject(new Error('Upload failed'));
                         resolve({
                             url: result.secure_url, // The permanent Cloudinary URL
                             filename: result.public_id,
