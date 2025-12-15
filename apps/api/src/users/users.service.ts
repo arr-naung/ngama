@@ -2,6 +2,7 @@ import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PostsService } from '../posts/posts.service';
 import { POST_INCLUDE } from '../posts/posts.constants';
+import { v2 as cloudinary } from 'cloudinary';
 
 @Injectable()
 export class UsersService {
@@ -195,6 +196,48 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, data: { name?: string; bio?: string; image?: string; coverImage?: string }) {
+    // 1. Fetch current user data to check for previous images
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { image: true, coverImage: true }
+    });
+
+    if (currentUser) {
+      // Helper to delete from Cloudinary
+      const deleteFromCloudinary = async (url: string) => {
+        try {
+          cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+          });
+
+          // Extract public_id: ngama_uploads/filename
+          const regex = /ngama_uploads\/[^./]+/;
+          const match = url.match(regex);
+
+          if (match) {
+            const publicId = match[0];
+            console.log(`Deleting old profile image/cover from Cloudinary: ${publicId}`);
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (error) {
+          console.error('Failed to delete old image from Cloudinary:', error);
+        }
+      };
+
+      // 2. Check Profile Image
+      // Only delete if a NEW image is provided and it's different from the old one
+      if (data.image && currentUser.image && data.image !== currentUser.image) {
+        await deleteFromCloudinary(currentUser.image);
+      }
+
+      // 3. Check Cover Image
+      if (data.coverImage && currentUser.coverImage && data.coverImage !== currentUser.coverImage) {
+        await deleteFromCloudinary(currentUser.coverImage);
+      }
+    }
+
     return this.prisma.user.update({
       where: { id: userId },
       data,
