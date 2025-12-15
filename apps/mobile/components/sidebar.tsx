@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getImageUrl } from '../constants';
 import { useTheme } from '../context/theme-context';
+import { removeToken } from '../lib/auth';
 
 interface SidebarProps {
     visible: boolean;
@@ -51,6 +52,12 @@ export default function Sidebar({ visible, onClose, user }: SidebarProps) {
             ]).start(() => setShowModal(false));
         }
     }, [visible]);
+
+    const handleLogout = async () => {
+        await removeToken();
+        onClose();
+        router.replace('/auth/signin');
+    };
 
     if (!showModal) return null;
 
@@ -155,6 +162,14 @@ export default function Sidebar({ visible, onClose, user }: SidebarProps) {
 
                         {/* Footer */}
                         <View className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                            <TouchableOpacity
+                                className="flex-row items-center gap-4 py-4"
+                                onPress={handleLogout}
+                            >
+                                <Ionicons name="log-out-outline" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+                                <Text className="text-black dark:text-white text-xl font-bold">Log out</Text>
+                            </TouchableOpacity>
+
                             <TouchableOpacity className="flex-row items-center gap-4 py-4">
                                 <Text className="text-black dark:text-white text-lg">Settings & Support</Text>
                                 <Ionicons name="chevron-down" size={20} color={theme === 'dark' ? 'white' : 'black'} />
@@ -162,7 +177,7 @@ export default function Sidebar({ visible, onClose, user }: SidebarProps) {
                         </View>
                     </View>
                 </Animated.View>
-            </View>
-        </Modal>
+            </View >
+        </Modal >
     );
 }
