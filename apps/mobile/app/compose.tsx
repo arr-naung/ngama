@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
 import { API_URL, getImageUrl } from '../constants';
 import { getToken } from '../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,7 +62,7 @@ export default function Compose() {
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             quality: 1,
         });
 
@@ -84,28 +85,28 @@ export default function Compose() {
             let imageUrl = null;
 
             if (image) {
-                const formData = new FormData();
-                const filename = image.split('/').pop() || 'image.jpg';
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : 'image/jpeg';
+                // Use FileSystem.uploadAsync for reliable Android uploads
+                try {
+                    const uploadResult = await uploadAsync(`${API_URL}/upload`, image, {
+                        httpMethod: 'POST',
+                        uploadType: 1, // FileSystemUploadType.MULTIPART (1)
+                        fieldName: 'file',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
 
-                // @ts-ignore: React Native FormData expects uri, name, type
-                formData.append('file', { uri: image, name: filename, type });
-
-                const uploadRes = await fetch(`${API_URL}/upload`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    body: formData,
-                });
-
-                if (uploadRes.ok) {
-                    const data = await uploadRes.json();
-                    imageUrl = data.url;
-                } else {
-                    console.error('Failed to upload image');
+                    if (uploadResult.status === 200 || uploadResult.status === 201) {
+                        const data = JSON.parse(uploadResult.body);
+                        imageUrl = data.url;
+                    } else {
+                        console.error('Failed to upload image', uploadResult);
+                        throw new Error(`Upload failed with status ${uploadResult.status}`);
+                    }
+                } catch (err) {
+                    console.error('Upload Async Error:', err);
+                    setLoading(false);
+                    return; // Stop execution if upload fails
                 }
             }
 
@@ -126,7 +127,9 @@ export default function Compose() {
             if (res.ok) {
                 router.back();
             } else {
-                console.error('Failed to post');
+                const errorText = await res.text();
+                console.error('Failed to post. Status:', res.status, 'Body:', errorText);
+                alert(`Failed to post: ${res.status} ${errorText}`);
             }
         } catch (error) {
             console.error(error);

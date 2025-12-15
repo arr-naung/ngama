@@ -20,6 +20,7 @@ export default function Signin() {
         setError('');
 
         try {
+            console.log('Attempting signin at:', `${API_URL}/auth/signin`);
             const res = await fetch(`${API_URL}/auth/signin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

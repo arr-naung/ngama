@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
@@ -61,7 +62,7 @@ export default function EditProfileScreen() {
 
         // Pick image
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: field === 'coverImage' ? [16, 9] : [1, 1],
             quality: 0.8,
@@ -75,33 +76,27 @@ export default function EditProfileScreen() {
     const uploadImage = async (uri: string, field: 'image' | 'coverImage') => {
         setUploading(true);
         try {
-            // Create form data
-            const formData = new FormData();
-            const filename = uri.split('/').pop() || 'image.jpg';
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
+            const token = await getToken();
 
-            formData.append('file', {
-                uri,
-                name: filename,
-                type,
-            } as any);
-
-            // Upload
-            const res = await fetch(`${API_URL}/upload`, {
-                method: 'POST',
-                body: formData,
+            const uploadResult = await uploadAsync(`${API_URL}/upload`, uri, {
+                httpMethod: 'POST',
+                uploadType: 1, // FileSystemUploadType.MULTIPART - literal to avoid enum issues
+                fieldName: 'file',
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`,
                 },
             });
 
-            const data = await res.json();
-            if (data.url) {
-                if (field === 'image') setImage(data.url);
-                else setCoverImage(data.url);
+            if (uploadResult.status === 200 || uploadResult.status === 201) {
+                const data = JSON.parse(uploadResult.body);
+                if (data.url) {
+                    if (field === 'image') setImage(data.url);
+                    else setCoverImage(data.url);
+                } else {
+                    Alert.alert('Error', 'Failed to upload image');
+                }
             } else {
-                Alert.alert('Error', 'Failed to upload image');
+                throw new Error('Upload failed');
             }
         } catch (error) {
             console.error('Upload error:', error);
