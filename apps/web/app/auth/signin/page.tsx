@@ -16,9 +16,35 @@ export default function SigninPage() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    const validateForm = (): string | null => {
+        // Email validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!formData.email.trim()) {
+            return 'Email is required';
+        }
+        if (!emailRegex.test(formData.email)) {
+            return 'Please provide a valid email address';
+        }
+
+        // Password validation
+        if (!formData.password) {
+            return 'Password is required';
+        }
+
+        return null;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        // Client-side validation
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -31,7 +57,12 @@ export default function SigninPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Signin failed');
+                // Handle validation errors (array of messages) or single message
+                if (data.message) {
+                    const msg = Array.isArray(data.message) ? data.message[0] : data.message;
+                    throw new Error(msg);
+                }
+                throw new Error(data.error || 'Invalid email or password');
             }
 
             localStorage.setItem('token', data.token);

@@ -12,26 +12,61 @@ export default function SignupPage() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        username: '',
         password: '',
         confirmPassword: ''
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    const validateForm = (): string | null => {
+        // Name validation
+        if (!formData.name.trim()) {
+            return 'Name is required';
+        }
+        if (formData.name.length > 50) {
+            return 'Name must be at most 50 characters';
+        }
+
+        // Email validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!formData.email.trim()) {
+            return 'Email is required';
+        }
+        if (!emailRegex.test(formData.email)) {
+            return 'Please provide a valid email address';
+        }
+
+        // Password validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+        if (formData.password.length < 8) {
+            return 'Password must be at least 8 characters';
+        }
+        if (!passwordRegex.test(formData.password)) {
+            return 'Password must contain uppercase, lowercase, number, and special character (@$!%*?&)';
+        }
+
+        // Confirm password validation
+        if (formData.password !== formData.confirmPassword) {
+            return 'Passwords do not match';
+        }
+
+        return null;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
 
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            setIsLoading(false);
+        // Client-side validation
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
             return;
         }
 
+        setIsLoading(true);
+
         try {
-            // Exclude confirmPassword from API request
             const { confirmPassword, ...apiData } = formData;
 
             const res = await fetch(`${API_URL}/auth/signup`, {
@@ -43,6 +78,11 @@ export default function SignupPage() {
             const data = await res.json();
 
             if (!res.ok) {
+                // Handle validation errors (array of messages) or single message
+                if (data.message) {
+                    const msg = Array.isArray(data.message) ? data.message[0] : data.message;
+                    throw new Error(msg);
+                }
                 throw new Error(data.error || 'Signup failed');
             }
 
@@ -99,17 +139,6 @@ export default function SignupPage() {
                                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="Username"
-                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                value={formData.username}
-                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                                 required
                             />
                         </div>

@@ -15,12 +15,37 @@ export default function Signin() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const validateForm = (): string | null => {
+        // Email validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!formData.email.trim()) {
+            return 'Email is required';
+        }
+        if (!emailRegex.test(formData.email)) {
+            return 'Please provide a valid email address';
+        }
+
+        // Password validation
+        if (!formData.password) {
+            return 'Password is required';
+        }
+
+        return null;
+    };
+
     const handleSignin = async () => {
-        setLoading(true);
         setError('');
 
+        // Client-side validation
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        setLoading(true);
+
         try {
-            console.log('Attempting signin at:', `${API_URL}/auth/signin`);
             const res = await fetch(`${API_URL}/auth/signin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -30,16 +55,22 @@ export default function Signin() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || 'Something went wrong');
+                // Handle validation errors (array of messages) or single message
+                if (data.message) {
+                    const msg = Array.isArray(data.message) ? data.message[0] : data.message;
+                    setError(msg);
+                } else {
+                    setError(data.error || 'Invalid email or password');
+                }
                 setLoading(false);
                 return;
             }
 
             await saveAuth(data.token, data.user);
             router.replace('/(tabs)/feed');
-        } catch (error) {
-            setError('Network error');
-            console.error(error);
+        } catch (err) {
+            setError('Network error. Please check your connection.');
+            console.error(err);
         } finally {
             setLoading(false);
         }
