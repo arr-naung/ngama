@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, UseGuards, Request, NotFoundException, Bo
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { OptionalAuthGuard } from '../auth/optional-auth.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller()
 export class UsersController {
@@ -42,7 +43,7 @@ export class UsersController {
 
     @UseGuards(AuthGuard('jwt'))
     @Patch('profile')
-    async updateProfile(@Request() req: any, @Body() body: any) {
+    async updateProfile(@Request() req: any, @Body() body: UpdateProfileDto) {
         return this.usersService.updateProfile(req.user.id, body);
     }
 

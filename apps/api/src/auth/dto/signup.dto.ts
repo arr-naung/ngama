@@ -1,4 +1,6 @@
 import { IsNotEmpty, IsString, MinLength, MaxLength, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
+import sanitizeHtml from 'sanitize-html';
 
 export class SignupDto {
     @IsNotEmpty({ message: 'Email is required' })
@@ -16,5 +18,6 @@ export class SignupDto {
     @IsString()
     @IsNotEmpty({ message: 'Name is required' })
     @MaxLength(50, { message: 'Name must be at most 50 characters' })
+    @Transform(({ value }) => value ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
     name: string;
 }
