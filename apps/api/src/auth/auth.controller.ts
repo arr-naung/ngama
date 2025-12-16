@@ -3,6 +3,8 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
+import { SignupDto } from './dto/signup.dto';
+
 @Controller('auth')
 export class AuthController {
     constructor(
@@ -11,11 +13,7 @@ export class AuthController {
     ) { }
 
     @Post('signup')
-    async signup(@Body() body: any) {
-        // Basic validation (should use DTOs later)
-        if (!body.email || !body.password || !body.username) {
-            throw new UnauthorizedException('Missing fields');
-        }
+    async signup(@Body() body: SignupDto) {
         return this.authService.signup(body);
     }
 

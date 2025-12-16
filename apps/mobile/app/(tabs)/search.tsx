@@ -129,7 +129,7 @@ export default function SearchScreen() {
                 size="medium"
             />
             <View>
-                <Text className="text-black dark:text-white font-bold text-base">{item.name || item.username}</Text>
+                <Text className="text-black dark:text-white font-bold text-base">{item.name}</Text>
                 <Text className="text-gray-500 text-sm">@{item.username}</Text>
                 <Text className="text-gray-500 text-xs">{item._count.followers} followers</Text>
             </View>

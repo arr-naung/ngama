@@ -32,7 +32,7 @@ export function QuotedPostCard({ quote, onPress }: QuotedPostCardProps) {
                     size="small"
                 />
                 <Text className="font-bold text-black dark:text-white text-base">
-                    {quote.author.name || quote.author.username}
+                    {quote.author.name}
                 </Text>
                 <Text className="text-gray-500 text-base">@{quote.author.username}</Text>
                 <Text className="text-gray-500 text-base">

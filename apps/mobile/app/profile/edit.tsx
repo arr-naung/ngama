@@ -13,6 +13,7 @@ import { AkhaInput } from '../../components/akha-input';
 export default function EditProfileScreen() {
     const router = useRouter();
     const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [bio, setBio] = useState('');
     const [image, setImage] = useState('');
     const [coverImage, setCoverImage] = useState('');
@@ -42,6 +43,7 @@ export default function EditProfileScreen() {
             if (res.ok) {
                 const data = await res.json();
                 setName(data.name || '');
+                setUsername(data.username || '');
                 setBio(data.bio || '');
                 setImage(data.image || '');
                 setCoverImage(data.coverImage || '');
@@ -125,12 +127,18 @@ export default function EditProfileScreen() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, bio, image, coverImage })
+                body: JSON.stringify({ name, bio, image, coverImage, username })
             });
 
             if (res.ok) {
                 Alert.alert('Success', 'Profile updated');
-                router.back();
+                // Navigate to the (possibly new) username to avoid 404 on the old profile page
+                if (username) {
+                    router.dismissAll();
+                    router.replace(`/u/${username}`);
+                } else {
+                    router.back();
+                }
             } else {
                 Alert.alert('Error', 'Failed to update profile');
             }
@@ -213,6 +221,20 @@ export default function EditProfileScreen() {
                     </View>
 
                     {/* Name */}
+                    <View>
+                        <Text className="text-gray-500 mb-1">Username</Text>
+                        <AkhaInput
+                            variant="insideIcon"
+                            containerClassName="rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+                            value={username}
+                            onChangeText={setUsername}
+                            placeholder="Username"
+                            maxLength={30}
+                            autoCapitalize="none"
+                            returnKeyType="next"
+                        />
+                    </View>
+
                     <View>
                         <Text className="text-gray-500 mb-1">Name</Text>
                         <AkhaInput

@@ -112,7 +112,7 @@ export default function Sidebar({ visible, onClose, user }: SidebarProps) {
                                             </View>
                                         )}
                                     </View>
-                                    <Text className="text-black dark:text-white text-xl font-bold">{user.name || user.username}</Text>
+                                    <Text className="text-black dark:text-white text-xl font-bold">{user.name}</Text>
                                     <Text className="text-gray-500 text-base">@{user.username}</Text>
                                 </TouchableOpacity>
 

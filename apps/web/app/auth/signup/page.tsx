@@ -10,9 +10,11 @@ import { API_URL } from '@/lib/api';
 export default function SignupPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
+        name: '',
         email: '',
         username: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -22,11 +24,20 @@ export default function SignupPage() {
         setError('');
         setIsLoading(true);
 
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            setIsLoading(false);
+            return;
+        }
+
         try {
+            // Exclude confirmPassword from API request
+            const { confirmPassword, ...apiData } = formData;
+
             const res = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(apiData)
             });
 
             const data = await res.json();
@@ -72,6 +83,17 @@ export default function SignupPage() {
 
                         <div>
                             <input
+                                type="text"
+                                placeholder="Name"
+                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <input
                                 type="email"
                                 placeholder="Email"
                                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -99,6 +121,17 @@ export default function SignupPage() {
                                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <input
+                                type="password"
+                                placeholder="Confirm Password"
+                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-black placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                value={formData.confirmPassword}
+                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                 required
                             />
                         </div>

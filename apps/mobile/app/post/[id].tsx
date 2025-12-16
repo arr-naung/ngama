@@ -334,7 +334,7 @@ export default function PostDetailsScreen() {
                         <View className="flex-row items-center gap-2 mb-2">
                             <RepostIcon size={14} color="#71767B" />
                             <Text className="text-[#71767B] text-sm font-bold">
-                                {item.author.name || item.author.username} Reposted
+                                {item.author.name} Reposted
                             </Text>
                         </View>
                     )}
@@ -356,7 +356,7 @@ export default function PostDetailsScreen() {
                         </TouchableOpacity>
                         <View>
                             <TouchableOpacity onPress={() => goToProfile(contentPost.author.username)}>
-                                <Text className="text-black dark:text-white font-bold text-lg">{contentPost.author.name || contentPost.author.username}</Text>
+                                <Text className="text-black dark:text-white font-bold text-lg">{contentPost.author.name}</Text>
                             </TouchableOpacity>
                             <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
                         </View>
@@ -448,7 +448,7 @@ export default function PostDetailsScreen() {
                     <View className="flex-row items-center gap-2 mb-2 ml-8">
                         <RepostIcon size={14} color="#71767B" />
                         <Text className="text-[#71767B] text-sm font-bold">
-                            {item.author.name || item.author.username} Reposted
+                            {item.author.name} Reposted
                         </Text>
                     </View>
                 )}
@@ -470,7 +470,7 @@ export default function PostDetailsScreen() {
                     <View className="flex-1">
                         <View className="flex-row gap-2 items-center">
                             <TouchableOpacity onPress={() => goToProfile(contentPost.author.username)}>
-                                <Text className="text-black dark:text-white font-bold text-lg">{contentPost.author.name || contentPost.author.username}</Text>
+                                <Text className="text-black dark:text-white font-bold text-lg">{contentPost.author.name}</Text>
                             </TouchableOpacity>
                             <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>
                             <Text className="text-gray-500 text-base">· {new Date(contentPost.createdAt).toLocaleDateString()}</Text>

@@ -40,32 +40,33 @@ export default function ProfileScreen() {
             }
 
             const res = await fetch(`${API_URL}/users/${username}`, { headers });
-            const text = await res.text();
-            console.log(`[fetchProfile] Status: ${res.status}, URL: ${API_URL}/users/${username}`);
 
-            try {
-                const data = JSON.parse(text);
-                if (res.ok) {
-                    setUser(data);
-                    setIsFollowing(data.isFollowedByMe);
-                    setFollowersCount(data._count.followers);
-                    setFollowingCount(data._count.following);
-
-                    // Check if this is the current user's own profile
-                    if (token) {
-                        try {
-                            const payload = JSON.parse(atob(token.split('.')[1]));
-                            setIsOwnProfile(payload.username === username);
-                        } catch (e) {
-                            console.error('Failed to decode token:', e);
-                        }
-                    }
-                } else {
-                    console.error('[fetchProfile] API Error:', data);
+            // Check status BEFORE parsing
+            if (!res.ok) {
+                console.log(`[fetchProfile] Error Status: ${res.status}`);
+                if (res.status === 404) {
+                    setUser(null); // Valid "User not found" state
+                    return;
                 }
-            } catch (e) {
-                console.error('[fetchProfile] JSON Parse Error:', e);
-                console.error('[fetchProfile] Response Text:', text.substring(0, 500)); // Log first 500 chars
+                const text = await res.text();
+                console.error('[fetchProfile] API Error Body:', text);
+                return;
+            }
+
+            const data = await res.json();
+            setUser(data);
+            setIsFollowing(data.isFollowedByMe);
+            setFollowersCount(data._count.followers);
+            setFollowingCount(data._count.following);
+
+            // Check if this is the current user's own profile
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    setIsOwnProfile(payload.username === username);
+                } catch (e) {
+                    console.error('Failed to decode token:', e);
+                }
             }
         } catch (error) {
             console.error('[fetchProfile] Network/System Error:', error);
@@ -210,7 +211,13 @@ export default function ProfileScreen() {
 
                     {/* Transparent Back Button */}
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={() => {
+                            if (router.canGoBack()) {
+                                router.back();
+                            } else {
+                                router.replace('/(tabs)');
+                            }
+                        }}
                         className="absolute top-4 left-4 w-10 h-10 rounded-full items-center justify-center"
                         style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
                     >
@@ -262,7 +269,7 @@ export default function ProfileScreen() {
                     </View>
 
                     <View className="mt-1">
-                        <Text className="text-black dark:text-white text-2xl font-bold">{user.name || user.username}</Text>
+                        <Text className="text-black dark:text-white text-2xl font-bold">{user.name}</Text>
                         <Text className="text-gray-500 text-lg">@{user.username}</Text>
                     </View>
 

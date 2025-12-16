@@ -122,7 +122,7 @@ export default function FollowsScreen() {
                                     )}
                                 </View>
                                 <View>
-                                    <Text className="text-black dark:text-white font-bold">{item.name || item.username}</Text>
+                                    <Text className="text-black dark:text-white font-bold">{item.name}</Text>
                                     <Text className="text-gray-500">@{item.username}</Text>
                                 </View>
                             </View>

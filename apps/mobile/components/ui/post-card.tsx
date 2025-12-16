@@ -80,7 +80,7 @@ export function PostCard({
                 <View className="flex-row items-center gap-2 mb-2 ml-8">
                     <RepostIcon size={14} color="#9CA3AF" />
                     <Text className="text-gray-400 text-sm font-bold">
-                        {originalAuthor.name || originalAuthor.username} Reposted
+                        {originalAuthor.name} Reposted
                     </Text>
                 </View>
             )}
@@ -101,7 +101,7 @@ export function PostCard({
                         <View className="flex-row items-center gap-2">
                             <TouchableOpacity onPress={() => onAuthorPress(contentPost.author.username)}>
                                 <Text className="font-bold text-black dark:text-white text-lg">
-                                    {contentPost.author.name || contentPost.author.username}
+                                    {contentPost.author.name}
                                 </Text>
                             </TouchableOpacity>
                             <Text className="text-gray-500 text-base">@{contentPost.author.username}</Text>

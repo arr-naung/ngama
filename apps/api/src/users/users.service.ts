@@ -197,7 +197,19 @@ export class UsersService {
     }
   }
 
-  async updateProfile(userId: string, data: { name?: string; bio?: string; image?: string; coverImage?: string }) {
+  async updateProfile(userId: string, data: { name?: string; bio?: string; image?: string; coverImage?: string; username?: string }) {
+    // 0. Check for username uniqueness if it's being updated
+    if (data.username) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { username: data.username },
+      });
+
+      // If user exists and it's NOT the current user
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('Username already taken');
+      }
+    }
+
     // 1. Fetch current user data to check for previous images
     const currentUser = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -9,9 +9,11 @@ import { XLogo } from '../../components/x-logo';
 export default function Signup() {
     const router = useRouter();
     const [formData, setFormData] = useState({
+        name: '',
         email: '',
         username: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -20,11 +22,20 @@ export default function Signup() {
         setLoading(true);
         setError('');
 
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            setLoading(false);
+            return;
+        }
+
         try {
+            // Exclude confirmPassword
+            const { confirmPassword, ...apiData } = formData;
+
             const res = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(apiData)
             });
 
             const data = await res.json();
@@ -72,9 +83,18 @@ export default function Signup() {
                         {/* Form */}
                         <View className="space-y-4 mb-8">
                             <TextInput
-                                placeholder="Email"
+                                placeholder="Name"
                                 placeholderTextColor="#9CA3AF"
                                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3.5 text-black text-base"
+                                value={formData.name}
+                                onChangeText={(text) => setFormData({ ...formData, name: text })}
+                                autoCorrect={false}
+                            />
+
+                            <TextInput
+                                placeholder="Email"
+                                placeholderTextColor="#9CA3AF"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3.5 text-black text-base mt-4"
                                 value={formData.email}
                                 onChangeText={(text) => setFormData({ ...formData, email: text })}
                                 autoCapitalize="none"
@@ -98,6 +118,16 @@ export default function Signup() {
                                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3.5 text-black text-base mt-4"
                                 value={formData.password}
                                 onChangeText={(text) => setFormData({ ...formData, password: text })}
+                                secureTextEntry
+                                autoCorrect={false}
+                            />
+
+                            <TextInput
+                                placeholder="Confirm Password"
+                                placeholderTextColor="#9CA3AF"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3.5 text-black text-base mt-4"
+                                value={formData.confirmPassword}
+                                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                                 secureTextEntry
                                 autoCorrect={false}
                             />

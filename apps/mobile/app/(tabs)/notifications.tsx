@@ -16,6 +16,7 @@ interface Notification {
     actor: {
         id: string;
         username: string;
+        name: string | null;
         image: string | null;
     };
     post?: {
@@ -217,7 +218,7 @@ export default function NotificationsScreen() {
                             <View className="flex-1">
                                 <View className="flex-row items-center gap-1 mb-0.5">
                                     <Text className="text-black dark:text-white font-bold text-base" numberOfLines={1}>
-                                        {item.actor.name || item.actor.username}
+                                        {item.actor.name}
                                     </Text>
                                     <Text className="text-gray-500 text-sm" numberOfLines={1}>
                                         @{item.actor.username} · {new Date(item.createdAt).toLocaleDateString()}
