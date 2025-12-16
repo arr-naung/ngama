@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from 'nativewind';
@@ -8,6 +8,9 @@ import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
 import { API_URL, getImageUrl } from '../constants';
 import { getToken } from '../lib/auth';
 import { Ionicons } from '@expo/vector-icons';
+import { AkhaKeyboard } from '../components/akha-keyboard';
+import { useCustomKeyboard } from '../hooks/use-custom-keyboard';
+import { AkhaIcon } from '../components/icons';
 
 export default function Compose() {
     const router = useRouter();
@@ -22,6 +25,10 @@ export default function Compose() {
     const [referencedPost, setReferencedPost] = useState<any>(null);
     const [showFullQuotedPost, setShowFullQuotedPost] = useState(false);
     const { colorScheme } = useColorScheme();
+
+    // Akha Keyboard integration
+    const { isVisible: showAkhaKeyboard, toggle: toggleAkhaKeyboard, inputRef, inputProps } = useCustomKeyboard();
+    const selectionRef = React.useRef({ start: 0, end: 0 });
 
     useEffect(() => {
         fetchUser();
@@ -188,6 +195,8 @@ export default function Compose() {
                                 )}
 
                                 <TextInput
+                                    ref={inputRef}
+                                    {...inputProps}
                                     className="text-black dark:text-white text-xl mb-2"
                                     placeholder={replyToId ? "Post your reply" : (quoteId ? "Add a comment" : "What is happening?!")}
                                     placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
@@ -196,12 +205,16 @@ export default function Compose() {
                                     autoFocus
                                     value={content}
                                     onChangeText={setContent}
+                                    onSelectionChange={(e) => { selectionRef.current = e.nativeEvent.selection; }}
                                     style={{ minHeight: quoteId ? 120 : 80, textAlignVertical: 'top' }}
                                 />
 
                                 <View className="flex-row mb-4">
                                     <TouchableOpacity onPress={pickImage} className="p-2">
                                         <Ionicons name="image-outline" size={24} color="#1D9BF0" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={toggleAkhaKeyboard} className="p-2">
+                                        <AkhaIcon size={24} color={showAkhaKeyboard ? '#1D9BF0' : '#9CA3AF'} />
                                     </TouchableOpacity>
                                 </View>
 
@@ -263,6 +276,35 @@ export default function Compose() {
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
+
+            {showAkhaKeyboard && (
+                <AkhaKeyboard
+                    onKeyPress={(key) => {
+                        const { start, end } = selectionRef.current;
+                        const before = content.slice(0, start);
+                        const after = content.slice(end);
+                        setContent(before + key + after);
+                        const newPos = start + key.length;
+                        selectionRef.current = { start: newPos, end: newPos };
+                    }}
+                    onDelete={() => {
+                        const { start, end } = selectionRef.current;
+                        if (start === end && start > 0) {
+                            const before = content.slice(0, start - 1);
+                            const after = content.slice(end);
+                            setContent(before + after);
+                            selectionRef.current = { start: start - 1, end: start - 1 };
+                        } else if (start !== end) {
+                            const before = content.slice(0, start);
+                            const after = content.slice(end);
+                            setContent(before + after);
+                            selectionRef.current = { start, end: start };
+                        }
+                    }}
+                    onSubmit={handlePost}
+                    onInteraction={() => inputRef.current?.focus()}
+                />
+            )}
         </SafeAreaView>
     );
 }

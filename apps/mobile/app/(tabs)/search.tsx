@@ -6,6 +6,7 @@ import { API_URL } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { UserAvatar } from '../../components/ui/user-avatar';
 import { PostCard } from '../../components/ui/post-card';
+import { AkhaTextInput } from '../../components/akha-text-input';
 import * as SecureStore from 'expo-secure-store';
 
 export default function SearchScreen() {
@@ -162,22 +163,21 @@ export default function SearchScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <View className="pt-12 px-4 pb-2 border-b border-gray-200 dark:border-gray-800">
-                <View className="bg-gray-100 dark:bg-gray-900 rounded-full px-4 h-10 flex-row items-center">
-                    <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-                    <TextInput
-                        className="flex-1 text-black dark:text-white text-base h-full p-0"
-                        placeholder="Search"
-                        placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
-                        value={query}
-                        onChangeText={setQuery}
-                        autoCapitalize="none"
-                    />
-                    {query.length > 0 && (
-                        <TouchableOpacity onPress={() => setQuery('')}>
-                            <Ionicons name="close-circle" size={20} color="#666" />
-                        </TouchableOpacity>
-                    )}
-                </View>
+                <AkhaTextInput
+                    containerClassName="bg-gray-100 dark:bg-gray-900 rounded-full px-4 h-10"
+                    inputClassName="text-base h-full p-0"
+                    placeholder="Search"
+                    value={query}
+                    onChangeText={setQuery}
+                    autoCapitalize="none"
+                    renderRight={
+                        query.length > 0 ? (
+                            <TouchableOpacity onPress={() => setQuery('')}>
+                                <Ionicons name="close-circle" size={20} color="#666" />
+                            </TouchableOpacity>
+                        ) : null
+                    }
+                />
             </View>
 
             <View className="flex-row border-b border-gray-200 dark:border-gray-800">

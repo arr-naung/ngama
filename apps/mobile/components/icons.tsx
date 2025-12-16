@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, G } from 'react-native-svg';
+import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
 
 interface IconProps {
     size?: number;
@@ -188,5 +188,67 @@ export const MoonIcon = ({ size = 24, color = 'gray' }: IconProps) => (
 export const DeleteIcon = ({ size = 20, color = 'gray' }: IconProps) => (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
         <Path d="M16 6V4.5C16 3.12 14.88 2 13.5 2h-3C9.11 2 8 3.12 8 4.5V6H3v2h1.06l.81 11.21C4.98 20.78 6.28 22 7.86 22h8.27c1.58 0 2.88-1.22 3-2.79L19.93 8H21V6h-5zm-6-1.5c0-.28.22-.5.5-.5h3c.27 0 .5.22.5.5V6h-4V4.5zm7.13 14.57c-.04.52-.47.93-1 .93H7.86c-.53 0-.96-.41-1-.93L6.07 8h11.85l-.79 11.07z" />
+    </Svg>
+);
+
+// Akha Keyboard Toggle Icon - Stylized 'AK' in rounded rectangle
+export const AkhaIcon = ({ size = 24, color = 'gray' }: IconProps) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        {/* Rounded rectangle border */}
+        <Path
+            d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        {/* Stylized A - left diagonal */}
+        <Path
+            d="M7 16L10 8"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        {/* Stylized A - right diagonal */}
+        <Path
+            d="M10 8L12 12"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        {/* Stylized A - horizontal bar */}
+        <Path
+            d="M8.2 13L11 13"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        {/* K - vertical stem */}
+        <Path
+            d="M13 8V16"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        {/* K - upper diagonal */}
+        <Path
+            d="M13 12L17 8"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        {/* K - lower diagonal */}
+        <Path
+            d="M13 12L17 16"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
     </Svg>
 );
