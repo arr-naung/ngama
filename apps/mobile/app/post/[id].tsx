@@ -11,7 +11,7 @@ import { QuotedPostCard } from '../../components/ui/quoted-post-card';
 import { RepostIcon, ViewsIcon, AkhaIcon } from '../../components/icons';
 import { PostOptionsModal } from '../../components/ui/post-options-modal';
 import { AkhaKeyboard } from '../../components/akha-keyboard';
-import { useCustomKeyboard } from '../../hooks/use-custom-keyboard';
+import { AkhaInput } from '../../components/akha-input';
 
 export default function PostDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -32,8 +32,6 @@ export default function PostDetailsScreen() {
     const [currentUser, setCurrentUser] = useState<any>(null);
 
     // Akha Keyboard integration
-    const { isVisible: showAkhaKeyboard, toggle: toggleAkhaKeyboard, inputRef, inputProps } = useCustomKeyboard();
-    const selectionRef = React.useRef({ start: 0, end: 0 });
 
     const handleItemReply = (item: any) => {
         router.push(`/compose?replyTo=${item.id}`);
@@ -589,20 +587,18 @@ export default function PostDetailsScreen() {
                     }
                 />
 
-                <View className="border-t border-gray-200 dark:border-gray-800 p-4 flex-row gap-2 items-center pb-8">
-                    <TouchableOpacity onPress={toggleAkhaKeyboard} className="p-2">
-                        <AkhaIcon size={24} color={showAkhaKeyboard ? '#1D9BF0' : '#9CA3AF'} />
-                    </TouchableOpacity>
-                    <TextInput
-                        ref={inputRef}
-                        {...inputProps}
-                        className="flex-1 bg-gray-100 dark:bg-gray-900 text-black dark:text-white rounded-full px-4 py-2"
-                        placeholder="Post your reply"
-                        placeholderTextColor="#666"
-                        value={replyContent}
-                        onChangeText={setReplyContent}
-                        onSelectionChange={(e) => { selectionRef.current = e.nativeEvent.selection; }}
-                    />
+                <View className="border-t border-gray-200 dark:border-gray-800 p-4 pb-8 flex-row items-center gap-2">
+                    <View className="flex-1">
+                        <AkhaInput
+                            value={replyContent}
+                            onChangeText={setReplyContent}
+                            placeholder="Post your reply"
+                            variant="insideIcon"
+                            inputClassName="text-base h-full p-0"
+                            showToggleButton={true}
+                            useKeyboardSpacer={true}
+                        />
+                    </View>
                     <TouchableOpacity
                         onPress={handleReply}
                         disabled={!replyContent.trim() || sendingReply}
@@ -612,35 +608,6 @@ export default function PostDetailsScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
-
-            {showAkhaKeyboard && (
-                <AkhaKeyboard
-                    onKeyPress={(key) => {
-                        const { start, end } = selectionRef.current;
-                        const before = replyContent.slice(0, start);
-                        const after = replyContent.slice(end);
-                        setReplyContent(before + key + after);
-                        const newPos = start + key.length;
-                        selectionRef.current = { start: newPos, end: newPos };
-                    }}
-                    onDelete={() => {
-                        const { start, end } = selectionRef.current;
-                        if (start === end && start > 0) {
-                            const before = replyContent.slice(0, start - 1);
-                            const after = replyContent.slice(end);
-                            setReplyContent(before + after);
-                            selectionRef.current = { start: start - 1, end: start - 1 };
-                        } else if (start !== end) {
-                            const before = replyContent.slice(0, start);
-                            const after = replyContent.slice(end);
-                            setReplyContent(before + after);
-                            selectionRef.current = { start, end: start };
-                        }
-                    }}
-                    onSubmit={handleReply}
-                    onInteraction={() => inputRef.current?.focus()}
-                />
-            )}
 
             {/* Repost Modal */}
             <Modal

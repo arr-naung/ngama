@@ -6,7 +6,7 @@ import { API_URL } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { UserAvatar } from '../../components/ui/user-avatar';
 import { PostCard } from '../../components/ui/post-card';
-import { AkhaTextInput } from '../../components/akha-text-input';
+import { AkhaInput } from '../../components/akha-input';
 import * as SecureStore from 'expo-secure-store';
 
 export default function SearchScreen() {
@@ -163,9 +163,8 @@ export default function SearchScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <View className="pt-12 px-4 pb-2 border-b border-gray-200 dark:border-gray-800">
-                <AkhaTextInput
-                    containerClassName="bg-gray-100 dark:bg-gray-900 rounded-full px-4 h-10"
-                    inputClassName="text-base h-full p-0"
+                <AkhaInput
+                    variant="insideIcon"
                     placeholder="Search"
                     value={query}
                     onChangeText={setQuery}

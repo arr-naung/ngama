@@ -74,44 +74,56 @@ const selectionRef = useRef({ start: 0, end: 0 });
 // Updated immediately on key press, not waiting for React re-render
 ```
 
-## Usage
 
+
+## Integration (New Standard)
+
+We have consolidated the integration logic into a reusable **`AkhaInput`** component. This handles cursor tracking, keyboard toggling, and layout management automatically.
+
+**Component Path:** `apps/mobile/components/akha-input.tsx`
+
+### 1. Basic Usage
 ```tsx
-import { useCustomKeyboard } from '../hooks/use-custom-keyboard';
-import { AkhaKeyboard } from '../components/akha-keyboard';
+import { AkhaInput } from '../components/akha-input';
 
-// In component:
-const keyboard = useCustomKeyboard();
-const [selection, setSelection] = useState({ start: 0, end: 0 });
-const selectionRef = useRef({ start: 0, end: 0 });
-
-// TextInput with cursor tracking:
-<TextInput
-    {...keyboard.inputProps}
-    selection={selection}
-    onSelectionChange={(e) => {
-        setSelection(e.nativeEvent.selection);
-        selectionRef.current = e.nativeEvent.selection;
-    }}
+<AkhaInput
+    value={content}
+    onChangeText={setContent}
+    placeholder="Type in Akha..."
+    variant="outsideIcon" // or "insideIcon"
+    useKeyboardSpacer={true} // Prevents keyboard overlap
 />
-
-// Keyboard with cursor-aware handlers:
-{keyboard.isVisible && (
-    <AkhaKeyboard
-        onKeyPress={(key) => {
-            const { start, end } = selectionRef.current;
-            const newContent = content.slice(0, start) + key + content.slice(end);
-            setContent(newContent);
-            const newPos = start + key.length;
-            setSelection({ start: newPos, end: newPos });
-            selectionRef.current = { start: newPos, end: newPos };
-        }}
-        onDelete={() => { /* Similar cursor-aware logic */ }}
-        onInteraction={() => keyboard.inputRef.current?.focus()}
-        onSubmit={handleSubmit}
-    />
-)}
 ```
+
+### 2. Variants (`variant`)
+
+#### `outsideIcon` (Default)
+- **Use Case:** Comments, Post Creation, Forms.
+- **Layout:** Icon sits to the *left* of the input. Flexible container.
+- **Example:**
+```tsx
+<AkhaInput
+    variant="outsideIcon"
+    containerClassName="flex-row gap-2 items-center"
+    inputClassName="bg-gray-100 rounded-full px-4 py-2"
+/>
+```
+
+#### `insideIcon`
+- **Use Case:** Search Bars.
+- **Layout:** Icon sits *inside* a gray pill-shaped background. Fixed styling.
+- **Example:**
+```tsx
+<AkhaInput
+    variant="insideIcon"
+    placeholder="Search..."
+/>
+```
+
+### 3. Keyboard Overlap (`useKeyboardSpacer`)
+- **Prop:** `useKeyboardSpacer={true}`
+- **Behavior:** Renders an invisible view with the keyboard's height ~290px when active.
+- **Why:** Pushes the input field up so it isn't covered by the custom keyboard (similar to `KeyboardAvoidingView` behavior).
 
 ## Dependencies
 - `expo-haptics` - Vibration feedback
