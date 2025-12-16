@@ -8,6 +8,7 @@ import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL, getImageUrl } from '../../constants';
 import { getToken } from '../../lib/auth';
+import { AkhaInput } from '../../components/akha-input';
 
 export default function EditProfileScreen() {
     const router = useRouter();
@@ -18,6 +19,7 @@ export default function EditProfileScreen() {
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [initialData, setInitialData] = useState({ name: '', bio: '' });
     const { colorScheme } = useColorScheme();
 
     useEffect(() => {
@@ -43,11 +45,13 @@ export default function EditProfileScreen() {
                 setBio(data.bio || '');
                 setImage(data.image || '');
                 setCoverImage(data.coverImage || '');
+                setInitialData({ name: data.name || '', bio: data.bio || '' });
             }
 
             setInitialLoading(false);
         } catch (error) {
             console.error(error);
+            Alert.alert('Fetch Error', error instanceof Error ? error.message : 'Failed to fetch profile');
             setInitialLoading(false);
         }
     };
@@ -211,28 +215,32 @@ export default function EditProfileScreen() {
                     {/* Name */}
                     <View>
                         <Text className="text-gray-500 mb-1">Name</Text>
-                        <TextInput
-                            className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg"
+                        <AkhaInput
+                            variant="insideIcon"
+                            containerClassName="rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
                             value={name}
                             onChangeText={setName}
-                            placeholder="Name"
-                            placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
+                            placeholder={initialData.name || "Name"}
                             maxLength={50}
+                            returnKeyType="done"
                         />
                     </View>
 
                     {/* Bio */}
                     <View>
                         <Text className="text-gray-500 mb-1">Bio</Text>
-                        <TextInput
-                            className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-3 rounded-lg h-24"
+                        <AkhaInput
+                            variant="insideIcon"
+                            containerClassName="rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 h-32 items-start py-3"
+                            inputClassName="text-base h-full p-0 leading-5"
                             value={bio}
                             onChangeText={setBio}
-                            placeholder="Bio"
-                            placeholderTextColor={colorScheme === 'dark' ? '#666' : '#999'}
+                            placeholder={initialData.bio || "Bio"}
                             multiline
                             textAlignVertical="top"
                             maxLength={160}
+                            returnKeyType="default"
+                            blurOnSubmit={false}
                         />
                     </View>
 

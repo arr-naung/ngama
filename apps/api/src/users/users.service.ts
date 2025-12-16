@@ -17,9 +17,11 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        email: true,
         name: true,
         image: true,
         bio: true,
+        coverImage: true,
         _count: {
           select: {
             followers: true,
