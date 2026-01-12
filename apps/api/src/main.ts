@@ -10,6 +10,7 @@ async function bootstrap() {
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
+  (app.getHttpAdapter().getInstance() as any).set('trust proxy', 1);
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

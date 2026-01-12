@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'ngama-api',
+            name: 'project-a-api',
             cwd: './apps/api',
             script: 'dist/main.js',
             instances: 1,
@@ -14,7 +14,7 @@ module.exports = {
             },
         },
         {
-            name: 'ngama-web',
+            name: 'project-a-web',
             cwd: './apps/web',
             script: 'npm',
             args: 'start',
