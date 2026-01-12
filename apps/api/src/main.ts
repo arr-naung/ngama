@@ -14,9 +14,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
+    forbidNonWhitelisted: false,
   }));
   // TransformInterceptor temporarily disabled due to RxJS version conflicts
   // app.useGlobalInterceptors(new TransformInterceptor());
-  await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
+  await app.listen(process.env.PORT ?? 4001, '0.0.0.0');
 }
 bootstrap();

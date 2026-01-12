@@ -3,15 +3,23 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import sharp from 'sharp';
 import { v2 as cloudinary } from 'cloudinary';
-import streamifier from 'streamifier';
+import * as streamifier from 'streamifier';
 
 @Controller('upload')
 export class UploadController {
     constructor() {
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const apiKey = process.env.CLOUDINARY_API_KEY;
+        const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+        if (!cloudName || !apiKey || !apiSecret || cloudName === 'fill_me_in') {
+            console.error('Cloudinary configuration missing!');
+        }
+
         cloudinary.config({
-            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-            api_key: process.env.CLOUDINARY_API_KEY,
-            api_secret: process.env.CLOUDINARY_API_SECRET,
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret,
         });
     }
 
@@ -42,7 +50,7 @@ export class UploadController {
                 .toBuffer();
 
             // Upload to Cloudinary via Stream
-            return new Promise((resolve, reject) => {
+            return await new Promise((resolve, reject) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
                     {
                         folder: 'ngama_uploads', // Folder in Cloudinary
@@ -63,7 +71,8 @@ export class UploadController {
 
         } catch (error) {
             console.error('Upload Error:', error);
-            throw new BadRequestException('Image upload failed');
+            const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+            throw new BadRequestException(`Upload failed: ${errorMessage}`);
         }
     }
 }
