@@ -14,10 +14,11 @@ export class UsersController {
         return this.usersService.me(req.user.id);
     }
 
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(OptionalAuthGuard)
     @Get('users/suggested')
     async getSuggested(@Request() req: any) {
-        return this.usersService.getSuggested(req.user.id);
+        const currentUserId = req.user?.id;
+        return this.usersService.getSuggested(currentUserId);
     }
 
     @UseGuards(OptionalAuthGuard)

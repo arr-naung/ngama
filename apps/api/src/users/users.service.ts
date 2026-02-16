@@ -60,14 +60,15 @@ export class UsersService {
     };
   }
 
-  async getSuggested(currentUserId: string, limit: number = 5) {
+  async getSuggested(currentUserId?: string, limit: number = 5) {
+    const where: any = {};
+    if (currentUserId) {
+      where.id = { not: currentUserId };
+      where.followers = { none: { followerId: currentUserId } };
+    }
+
     const users = await this.prisma.user.findMany({
-      where: {
-        id: { not: currentUserId },
-        followers: {
-          none: { followerId: currentUserId },
-        },
-      },
+      where,
       take: limit,
       select: {
         id: true,

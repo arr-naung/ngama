@@ -29,9 +29,16 @@
     - [x] N+1 ancestor query fix (depth limit)
     - [x] Frontend token expiry + server verification
 
+## 🚀 Production Deployment
+
+- [x] Locate project root on VPS
+- [x] Pull latest changes from GitHub
+- [x] Configure `.env` in `apps/api`
+- [x] Configure `.env.local` in `apps/web`
+- [x] Rebuild and restart application
+
 ## 🔜 Future Work
 
 - [ ] Convert public pages to Server Components (SEO)
 - [ ] Add unit & E2E tests
 - [ ] Mobile app feature parity with web
-- [ ] Production deployment checklist
