@@ -20,7 +20,6 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         return (
             <>
                 {children}
-                {/* @ts-expect-error Sonner types not fully compatible with React 19 yet */}
                 <Toaster />
             </>
         );
@@ -44,7 +43,6 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
             {/* Mobile Bottom Nav - only visible on mobile */}
             <MobileBottomNav />
-            {/* @ts-expect-error Sonner types not fully compatible with React 19 yet */}
             <Toaster />
         </div>
     );
