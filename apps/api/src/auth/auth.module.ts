@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -8,9 +8,19 @@ import { JwtStrategy } from './jwt.strategy';
 @Module({
     imports: [
         PassportModule,
-        JwtModule.register({
-            secret: process.env.JWT_SECRET || 'super-secret-key', // TODO: Use ConfigService
-            signOptions: { expiresIn: '7d' },
+        JwtModule.registerAsync({
+            useFactory: () => {
+                const secret = process.env.JWT_SECRET;
+                if (!secret) {
+                    const logger = new Logger('AuthModule');
+                    logger.error('JWT_SECRET environment variable is not set! The application cannot start securely.');
+                    throw new Error('JWT_SECRET environment variable is required');
+                }
+                return {
+                    secret,
+                    signOptions: { expiresIn: '7d' },
+                };
+            },
         }),
     ],
     providers: [AuthService, JwtStrategy],

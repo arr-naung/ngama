@@ -1,9 +1,12 @@
 import { z } from 'zod';
 
+// These Zod schemas are used for frontend form validation.
+// Backend validation is handled separately by class-validator DTOs in the API.
+
 export const SignupSchema = z.object({
     email: z.string().email(),
-    username: z.string().min(3).max(20),
-    password: z.string().min(8)
+    name: z.string().min(1).max(50),
+    password: z.string().min(8),
 });
 
 export const SigninSchema = z.object({

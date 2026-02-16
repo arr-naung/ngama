@@ -12,11 +12,13 @@ export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [username, setUsername] = useState<string | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
             const token = localStorage.getItem('token');
             if (token) {
+                setIsAuthenticated(true);
                 try {
                     const parts = token.split('.');
                     if (parts.length < 2) return;
@@ -49,6 +51,13 @@ export default function Sidebar() {
         router.push('/auth/signin');
     };
 
+    const handleAuthRequiredClick = (e: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            e.preventDefault();
+            router.push('/auth/signin');
+        }
+    };
+
     return (
         <div className="sticky top-0 h-screen w-64 bg-background p-4 pl-6 hidden md:flex flex-col">
             <Link href="/" className="mb-4 px-4 py-2 block">
@@ -64,7 +73,11 @@ export default function Sidebar() {
                     <SearchIcon />
                     <span>Search</span>
                 </Link>
-                <Link href="/notifications" className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === '/notifications' ? 'font-bold' : ''}`}>
+                <Link
+                    href={isAuthenticated ? '/notifications' : '/auth/signin'}
+                    onClick={handleAuthRequiredClick}
+                    className={`flex items-center gap-4 px-4 py-3 text-xl font-medium text-foreground hover:bg-muted rounded-full transition-colors ${pathname === '/notifications' ? 'font-bold' : ''}`}
+                >
                     <NotificationsIcon filled={pathname === '/notifications'} />
                     <span>Notifications</span>
                 </Link>
@@ -78,12 +91,21 @@ export default function Sidebar() {
             </nav>
 
             <div className="p-4 border-t border-border">
-                <button
-                    onClick={handleLogout}
-                    className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity"
-                >
-                    Sign out
-                </button>
+                {isAuthenticated ? (
+                    <button
+                        onClick={handleLogout}
+                        className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity"
+                    >
+                        Sign out
+                    </button>
+                ) : (
+                    <Link
+                        href="/auth/signin"
+                        className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity block text-center"
+                    >
+                        Sign in
+                    </Link>
+                )}
             </div>
         </div>
     );

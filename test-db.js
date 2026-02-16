@@ -1,6 +1,7 @@
 // test-db.js
 const { Client } = require('pg');
-require('dotenv').config({ path: 'apps/api/.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, 'apps/api/.env') });
 
 console.log('Testing connection to:', process.env.DATABASE_URL);
 

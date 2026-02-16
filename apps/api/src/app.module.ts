@@ -11,6 +11,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 import { UploadModule } from './upload/upload.module';
 import { HealthModule } from './health/health.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -24,6 +25,7 @@ import { join } from 'path';
         },
       ],
     }),
+    CloudinaryModule,
     PrismaModule,
     AuthModule,
     PostsModule,

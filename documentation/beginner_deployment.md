@@ -99,6 +99,7 @@ nano /etc/nginx/sites-available/A
 ```nginx
 server {
     server_name youtubersity.xyz www.youtubersity.xyz;
+    client_max_body_size 50M;
 
     location / {
         proxy_pass http://localhost:4000;

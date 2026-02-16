@@ -1,63 +1,37 @@
 # Tasks
 
-- [x] Monorepo Setup <!-- id: 0 -->
-    - [x] Initialize Turborepo <!-- id: 1 -->
-    - [x] Setup `apps/web` (Next.js 15) <!-- id: 2 -->
-    - [x] Setup `apps/mobile` (Expo / React Native) <!-- id: 3 -->
-    - [x] Setup `packages/db` (Prisma Shared) <!-- id: 4 -->
-- [/] Database & Architecture <!-- id: 5 -->
-    - [x] Design shared database schema (Users, Posts, Likes, Follows) <!-- id: 6 -->
-    - [x] Configure Prisma in `packages/db` <!-- id: 7 -->
-    - [x] Setup API Routes in `apps/web` for Mobile consumption <!-- id: 8 -->
-- [/] Authentication <!-- id: 9 -->
-    - [x] Implement Auth API (NextAuth/JWT) <!-- id: 10 -->
-    - [x] Web: Sign up/in flow <!-- id: 11 -->
-    - [x] Mobile: Sign up/in flow <!-- id: 12 -->
-- [x] Core Features (Web & Mobile) <!-- id: 13 -->
-    - [x] Shared Types/Validation <!-- id: 14 -->
-    - [x] Feed Implementation (Web & Mobile) <!-- id: 15 -->
-    - [x] Create Post (Web & Mobile) <!-- id: 16 -->
-    - [x] Likes & Follows <!-- id: 17 -->
-        - [x] API: Like/Unlike Post <!-- id: 18 -->
-        - [x] API: Follow/Unfollow User <!-- id: 19 -->
-        - [x] Web: Like Button & Optimistic UI <!-- id: 20 -->
-        - [x] Mobile: Like Button & Optimistic UI <!-- id: 21 -->
-        - [x] Feature: Follow Lists (Followers/Following) <!-- id: 49 -->
-            - [x] API: Get Followers/Following Lists <!-- id: 50 -->
-            - [x] Web: Follow List Modal <!-- id: 51 -->
-            - [x] Mobile: Follow List Screen <!-- id: 52 -->
-    - [x] Profile Page <!-- id: 22 -->
-        - [x] API: Get User Profile & Stats <!-- id: 23 -->
-        - [x] API: Get User Posts <!-- id: 24 -->
-        - [x] Web: Profile Page UI <!-- id: 25 -->
-        - [x] Mobile: Profile Screen UI <!-- id: 26 -->
-        - [x] Feature: Profile Tabs (Posts, Replies, Likes) <!-- id: 48 -->
-    - [x] Post Details & Replies <!-- id: 27 -->
-        - [x] API: Get Post Details (with replies) <!-- id: 28 -->
-        - [x] API: Create Reply <!-- id: 29 -->
-        - [x] Web: Post Details Page <!-- id: 30 -->
-        - [x] Mobile: Post Details Screen <!-- id: 31 -->
-        - [x] Web: Notifications Page <!-- id: 45 -->
-    - [x] Feature: Standard Themes (Light/Dark) <!-- id: 53 -->
-        - [x] Config: Tailwind & CSS Variables <!-- id: 54 -->
-        - [x] Web: Refactor Components for Theming <!-- id: 55 -->
-    - [x] UI Polish <!-- id: 56 -->
-        - [x] Fix Post Input Visibility & Button Color <!-- id: 57 -->
-        - [x] Fix Layout Borders (Standard X Style) <!-- id: 61 -->
-    - [x] Feature: Theme Toggle <!-- id: 58 -->
-        - [x] Config: Dark Mode Class Strategy <!-- id: 59 -->
-        - [x] Fix frontend event propagation issue (Retweet menu closing immediately)
-    - [x] Implement X-style Retweets and Quote Tweets
-        - [x] Update API to support `repostId` and `quoteId`
-        - [x] Create `QuoteModal` component
-        - [x] Update `PostList` to handle Retweet/Quote actions
-        - [x] Add Notification UI for Reposts/Quotes
-        - [x] Fix Retweet/Quote display on Profile Page
-        - [x] Fix Quote Tweet display on Post Detail Page (Ancestors & Replies)
-    - [x] Implement Post Media (Images)
-        - [x] Backend: Update `POST /api/posts` to accept `image`
-        - [x] Frontend: Update `PostInput` for image upload
-        - [x] Frontend: Update `PostList` and `PostPage` to display images
-    - [x] Enhance Quote Tweets (Images)
-        - [x] Frontend: Update `QuoteModal` for image upload
-        - [x] Frontend: Update `PostList` and `PostPage` to display quoted images
+## ✅ Completed
+
+- [x] Monorepo Setup (Turborepo, Next.js, Expo, Prisma)
+- [x] Core Features (Web & Mobile)
+    - [x] Shared Types/Validation
+    - [x] Feed Implementation
+    - [x] Create Post
+    - [x] Likes & Follows (API + UI + Optimistic UI)
+    - [x] Follow Lists (Followers/Following)
+    - [x] User Profiles (Page, Tabs, Stats)
+    - [x] Post Details & Replies
+    - [x] Notifications (Real-time via Socket.IO)
+    - [x] Light/Dark Theming
+    - [x] Retweets & Quote Tweets
+    - [x] Post Media (Image uploads via Cloudinary)
+    - [x] Search (Users + Posts)
+- [x] Security Hardening
+    - [x] Input sanitization (XSS protection)
+    - [x] Rate limiting (Throttler)
+    - [x] JWT secret hardening (removed fallback)
+    - [x] CORS restriction
+    - [x] Upload auth guard + file type validation
+- [x] Architecture Improvements
+    - [x] Centralized Cloudinary module
+    - [x] Typed PostsService.create (removed `data: any`)
+    - [x] Fixed Zod/class-validator schema mismatch
+    - [x] N+1 ancestor query fix (depth limit)
+    - [x] Frontend token expiry + server verification
+
+## 🔜 Future Work
+
+- [ ] Convert public pages to Server Components (SEO)
+- [ ] Add unit & E2E tests
+- [ ] Mobile app feature parity with web
+- [ ] Production deployment checklist

@@ -2,16 +2,18 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { POST_INCLUDE } from './posts.constants';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
-import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { CreatePostDto } from './dto/create-post.dto';
 
 @Injectable()
 export class PostsService {
     constructor(
         private prisma: PrismaService,
         private notificationsGateway: NotificationsGateway,
+        private cloudinaryService: CloudinaryService,
     ) { }
 
-    async create(data: any, userId: string) {
+    async create(data: CreatePostDto, userId: string) {
         // Handle Repost Toggle: If it's a pure repost (no content) and already exists, delete it (undo)
         if (data.repostId && !data.content && !data.quoteId && !data.parentId) {
             const existingRepost = await this.prisma.post.findFirst({
@@ -160,10 +162,12 @@ export class PostsService {
             orderBy: { createdAt: 'asc' },
         });
 
-        // Fetch ancestors (parent chain)
+        // Fetch ancestors (parent chain) — depth-limited to prevent N+1 explosion
+        const MAX_ANCESTOR_DEPTH = 10;
         const ancestors: any[] = [];
         let currentPost = post;
-        while (currentPost.parentId) {
+        let depth = 0;
+        while (currentPost.parentId && depth < MAX_ANCESTOR_DEPTH) {
             const parent = await this.prisma.post.findUnique({
                 where: { id: currentPost.parentId },
                 include: POST_INCLUDE,
@@ -171,6 +175,7 @@ export class PostsService {
             if (!parent) break;
             ancestors.unshift(parent);
             currentPost = parent;
+            depth++;
         }
 
         // Add like/repost status for main post, ancestors, and replies
@@ -384,31 +389,7 @@ export class PostsService {
 
         // 3. Delete image from Cloudinary if exists
         if (post.image) {
-            try {
-                // Configure Cloudinary (Lazily)
-                cloudinary.config({
-                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-                    api_key: process.env.CLOUDINARY_API_KEY,
-                    api_secret: process.env.CLOUDINARY_API_SECRET,
-                });
-
-                // Extract public_id from URL
-                // Standard URL: https://res.cloudinary.com/.../v12345/ngama_uploads/filename.jpg
-                // We want: ngama_uploads/filename
-                const regex = /ngama_uploads\/[^./]+/;
-                const match = post.image.match(regex);
-
-                if (match) {
-                    const publicId = match[0];
-                    console.log(`Deleting image from Cloudinary: ${publicId}`);
-                    await cloudinary.uploader.destroy(publicId);
-                } else {
-                    console.warn(`Could not extract public_id from image URL: ${post.image}`);
-                }
-            } catch (error) {
-                console.error('Failed to delete image from Cloudinary:', error);
-                // Continue with post deletion even if image deletion fails
-            }
+            await this.cloudinaryService.destroyByUrl(post.image);
         }
 
         // 4. Delete the post (cascade will handle related data)

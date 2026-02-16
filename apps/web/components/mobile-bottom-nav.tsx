@@ -60,18 +60,25 @@ export default function MobileBottomNav() {
                 </Link>
 
                 <Link
-                    href="/notifications"
+                    href={username ? '/notifications' : '/auth/signin'}
                     className={`flex-1 flex justify-center items-center h-full hover:bg-muted transition-colors ${pathname === '/notifications' ? 'text-primary' : 'text-muted-foreground'}`}
                 >
                     <NotificationsIcon filled={pathname === '/notifications'} />
                 </Link>
 
-                {username && (
+                {username ? (
                     <Link
                         href={`/u/${username}`}
                         className={`flex-1 flex justify-center items-center h-full hover:bg-muted transition-colors ${pathname === `/u/${username}` ? 'text-primary' : 'text-muted-foreground'}`}
                     >
                         <ProfileIcon filled={pathname === `/u/${username}`} />
+                    </Link>
+                ) : (
+                    <Link
+                        href="/auth/signin"
+                        className="flex-1 flex justify-center items-center h-full hover:bg-muted transition-colors text-muted-foreground"
+                    >
+                        <ProfileIcon filled={false} />
                     </Link>
                 )}
             </div>

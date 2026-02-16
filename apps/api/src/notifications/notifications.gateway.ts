@@ -10,7 +10,10 @@ import { Injectable } from '@nestjs/common';
 
 @WebSocketGateway({
     cors: {
-        origin: '*',
+        origin: process.env.CORS_ORIGINS
+            ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+            : ['http://localhost:4000'],
+        credentials: true,
     },
 })
 @Injectable()

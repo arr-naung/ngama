@@ -110,6 +110,12 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
 
     const handleLike = async (postId: string, currentLiked: boolean, e: React.MouseEvent) => {
         e.stopPropagation();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/auth/signin');
+            return;
+        }
+
         // Optimistic update
         setPosts(posts.map(p => {
             if (p.id === postId) {
@@ -126,9 +132,6 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
         }));
 
         try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
             await fetch(`${API_URL}/posts/${postId}/like`, {
                 method: 'POST',
                 headers: {
@@ -247,6 +250,44 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
         return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
     }
 
+    const handleGuestReply = (post: Post) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/auth/signin');
+            return;
+        }
+        setReplyingTo(post);
+    };
+
+    const handleGuestQuote = (post: Post) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/auth/signin');
+            return;
+        }
+        setQuotingPost(post);
+    };
+
+    const handleGuestRepost = (post: Post) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/auth/signin');
+            return;
+        }
+        handleRepost(post);
+    };
+
+    const handleGuestRetweetMenuToggle = (postId: string, e: React.MouseEvent) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            e.stopPropagation();
+            router.push('/auth/signin');
+            return;
+        }
+        e.nativeEvent.stopImmediatePropagation();
+        setRetweetMenuOpen(retweetMenuOpen === postId ? null : postId);
+    };
+
     return (
         <>
             <div className="divide-y divide-border">
@@ -256,9 +297,9 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                         post={post}
                         onPostClick={(id) => router.push(`/post/${id}`)}
                         onAuthorClick={(username) => router.push(`/u/${username}`)}
-                        onReply={setReplyingTo}
-                        onRepost={handleRepost}
-                        onQuote={setQuotingPost}
+                        onReply={handleGuestReply}
+                        onRepost={handleGuestRepost}
+                        onQuote={handleGuestQuote}
                         onLike={handleLike}
                         onDelete={handleDeleteClick}
                         currentUserId={currentUserId || undefined}
@@ -269,10 +310,7 @@ export default function PostList({ apiUrl = `${API_URL}/posts` }: { apiUrl?: str
                             setPostMenuOpen(postMenuOpen === id ? null : id);
                         }}
                         retweetMenuOpen={retweetMenuOpen === post.id}
-                        onRetweetMenuToggle={(e) => {
-                            e.nativeEvent.stopImmediatePropagation();
-                            setRetweetMenuOpen(retweetMenuOpen === post.id ? null : post.id);
-                        }}
+                        onRetweetMenuToggle={(e) => handleGuestRetweetMenuToggle(post.id, e)}
                     />
                 ))}
 
